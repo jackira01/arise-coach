@@ -495,5 +495,14 @@ const TOPIC_CATEGORIES = [
     <p class="font-primary text-[.8rem] text-[rgba(255,180,180,.3)] tracking-[1px]">
       © {{ new Date().getFullYear() }} Tecnologia COL. Todos los derechos reservados.
     </p>
+    <p class="font-primary text-[.75rem] text-[rgba(255,180,180,.2)] tracking-[1px] mt-1">
+      Desarrollado por
+      <a
+        href="https://tecnologiacol.lat/"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-[rgba(255,180,180,.4)] hover:text-red-400 transition-colors duration-300 underline underline-offset-2"
+      >Tecnologia COL</a>
+    </p>
   </footer>
 </template>
