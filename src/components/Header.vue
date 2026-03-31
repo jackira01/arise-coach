@@ -3,7 +3,6 @@ import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
 const NAV_LINKS = [
-  { label: 'Servicios', href: '#servicios' },
   { label: 'Precios', href: '#precios' },
   { label: 'Sobre Nosotros', href: '#sobre-nosotros' },
 ]
@@ -38,7 +37,7 @@ function closeMenu() {
         <li v-for="link in NAV_LINKS" :key="link.label">
           <a
             :href="link.href"
-            class="text-[rgba(255,190,190,.5)] font-primary text-[.85rem] lg:text-[.9rem] font-semibold tracking-[2px] uppercase no-underline transition-colors duration-250 hover:text-red-400"
+            class="text-[rgba(255,210,210,.85)] font-primary text-[.85rem] lg:text-[.9rem] font-semibold tracking-[2px] uppercase no-underline transition-colors duration-250 hover:text-red-400"
           >
             {{ link.label }}
           </a>
@@ -75,7 +74,7 @@ function closeMenu() {
         <li v-for="link in NAV_LINKS" :key="link.label">
           <a
             :href="link.href"
-            class="block py-3 px-2 text-[rgba(255,190,190,.6)] font-primary text-[.95rem] font-semibold tracking-[2px] uppercase no-underline border-b border-red-800/12 last:border-b-0 transition-colors duration-200 hover:text-red-400"
+            class="block py-3 px-2 text-[rgba(255,210,210,.85)] font-primary text-[.95rem] font-semibold tracking-[2px] uppercase no-underline border-b border-red-800/12 last:border-b-0 transition-colors duration-200 hover:text-red-400"
             @click="closeMenu"
           >
             {{ link.label }}
