@@ -79,11 +79,10 @@ const PLANS = [
   },
 ]
 
-const WA_NUMBER = '573237242744'
+const DISCORD_USER_ID = '1385138655139594283'
 
-function whatsappUrl(planName: string): string {
-  const msg = `Hola! Me interesa el *${planName}* de AriseXR Coaching. Me gustaría agendar una reunión para conocer más detalles y comenzar a mejorar mi nivel en League of Legends. ¿Cuándo podemos hablar?`
-  return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`
+function discordUrl(): string {
+  return `https://discord.com/users/${DISCORD_USER_ID}`
 }
 
 // ── TEMAS ─────────────────────────────────────────────────
@@ -311,7 +310,7 @@ const TOPIC_CATEGORIES = [
 
           <!-- CTA -->
           <a
-            :href="whatsappUrl(plan.name)"
+            :href="discordUrl()"
             target="_blank"
             rel="noopener noreferrer"
             :class="[
@@ -410,6 +409,83 @@ const TOPIC_CATEGORIES = [
         >
           {{ val }}
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ REDES SOCIALES ══════════════════ -->
+  <section class="relative z-[2] py-16 md:py-28 px-5 sm:px-8 lg:px-13">
+    <div class="max-w-4xl mx-auto text-center">
+      <div v-reveal class="flex items-center justify-center gap-3 font-primary text-[.78rem] tracking-[4px] uppercase text-red-500 mb-4">
+        <span class="w-7 h-px bg-red-500 inline-block" />
+        Síguenos
+        <span class="w-7 h-px bg-red-500 inline-block" />
+      </div>
+      <h2 v-reveal="100" class="font-serif text-[clamp(2rem,3.5vw,3rem)] font-bold uppercase text-[#fff0f0] mb-4">
+        Nuestras
+        <span class="bg-linear-to-r from-red-500 via-rose-400 to-orange-300 bg-clip-text text-transparent">Redes</span>
+      </h2>
+      <p v-reveal="150" class="font-primary text-[1rem] text-[rgba(255,210,210,.6)] mb-12 max-w-xl mx-auto">
+        Contenido, streams y clips de ranked. Síguenos para no perderte nada.
+      </p>
+
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
+        <!-- TikTok -->
+        <a
+          v-reveal="200"
+          href="https://www.tiktok.com/@arisedxr"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="group flex items-center gap-4 bg-red-950/30 backdrop-blur-sm border border-red-800/20 rounded-2xl px-8 py-5 w-full sm:w-auto hover:border-red-600/40 hover:shadow-[0_0_30px_rgba(180,20,20,.3)] transition-all duration-300"
+        >
+          <span class="shrink-0 text-[#fff0f0] group-hover:text-red-400 transition-colors duration-300">
+            <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.79 1.54V6.78a4.85 4.85 0 01-1.02-.09z"/>
+            </svg>
+          </span>
+          <div class="text-left">
+            <p class="font-primary text-[.7rem] uppercase tracking-[2px] text-[rgba(255,180,180,.5)] mb-0.5">TikTok</p>
+            <p class="font-primary text-[.95rem] font-bold text-[#fff0f0] group-hover:text-red-400 transition-colors duration-300">@arisedxr</p>
+          </div>
+        </a>
+
+        <!-- Twitch -->
+        <a
+          v-reveal="300"
+          href="https://www.twitch.tv/arisexr"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="group flex items-center gap-4 bg-red-950/30 backdrop-blur-sm border border-red-800/20 rounded-2xl px-8 py-5 w-full sm:w-auto hover:border-red-600/40 hover:shadow-[0_0_30px_rgba(180,20,20,.3)] transition-all duration-300"
+        >
+          <span class="shrink-0 text-[#fff0f0] group-hover:text-red-400 transition-colors duration-300">
+            <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/>
+            </svg>
+          </span>
+          <div class="text-left">
+            <p class="font-primary text-[.7rem] uppercase tracking-[2px] text-[rgba(255,180,180,.5)] mb-0.5">Twitch</p>
+            <p class="font-primary text-[.95rem] font-bold text-[#fff0f0] group-hover:text-red-400 transition-colors duration-300">arisexr</p>
+          </div>
+        </a>
+
+        <!-- YouTube -->
+        <a
+          v-reveal="400"
+          href="https://www.youtube.com/channel/UCmz7fGX6fhIkbBT7XETgsPA"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="group flex items-center gap-4 bg-red-950/30 backdrop-blur-sm border border-red-800/20 rounded-2xl px-8 py-5 w-full sm:w-auto hover:border-red-600/40 hover:shadow-[0_0_30px_rgba(180,20,20,.3)] transition-all duration-300"
+        >
+          <span class="shrink-0 text-[#fff0f0] group-hover:text-red-400 transition-colors duration-300">
+            <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+          </span>
+          <div class="text-left">
+            <p class="font-primary text-[.7rem] uppercase tracking-[2px] text-[rgba(255,180,180,.5)] mb-0.5">YouTube</p>
+            <p class="font-primary text-[.95rem] font-bold text-[#fff0f0] group-hover:text-red-400 transition-colors duration-300">AriseXR</p>
+          </div>
+        </a>
       </div>
     </div>
   </section>
