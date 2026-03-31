@@ -5,23 +5,11 @@ import HeroChart from '@/components/HeroChart.vue'
 import Stats from '@/components/Stats.vue'
 
 // ── PRECIOS ────────────────────────────────────────────────
-const INCLUDED_ALL = [
-  'Retroalimentación personalizada',
-  'Coach en vivo',
-  'Entrenamiento personalizado',
-  'Análisis previo',
-  'Videos personalizados de mejoras',
-  'Teorías aplicadas al juego',
-  'Práctica guiada',
-  'Entendimiento analítico pre y post game',
-]
-
 const PLANS = [
   {
     name: 'Silver Pack',
     badge: '',
     price: '200 USD',
-    period: '/ mes',
     highlight: false,
     rankImg: '/ranks/silver.webp',
     rankGlow: '#90a4ae',
@@ -31,12 +19,15 @@ const PLANS = [
     description: 'El punto de partida ideal para comenzar a mejorar con estructura y guía profesional.',
     cta: 'Elegir Silver',
     guarantee: false,
+    features: [
+      'Retroalimentación personalizada',
+      'Coach en vivo',
+    ],
   },
   {
     name: 'Esmerald Pack',
     badge: '',
     price: '300 USD',
-    period: '/ mes',
     highlight: false,
     rankImg: '/ranks/emerald.png',
     rankGlow: '#3dba6a',
@@ -46,12 +37,17 @@ const PLANS = [
     description: 'Para jugadores que quieren progresar de forma constante y afianzar sus bases.',
     cta: 'Elegir Esmerald',
     guarantee: false,
+    features: [
+      'Retroalimentación personalizada',
+      'Coach en vivo',
+      'Entrenamiento personalizado',
+      'Análisis previo',
+    ],
   },
   {
     name: 'Diamond Pack',
     badge: 'RECOMENDADO',
     price: '500 USD',
-    period: '/ mes',
     highlight: true,
     rankImg: '/ranks/diamond.png',
     rankGlow: '#4a9ee0',
@@ -61,12 +57,19 @@ const PLANS = [
     description: 'El equilibrio perfecto entre intensidad y resultados para escalar de rango rápidamente.',
     cta: 'Elegir Diamond',
     guarantee: false,
+    features: [
+      'Retroalimentación personalizada',
+      'Coach en vivo',
+      'Entrenamiento personalizado',
+      'Análisis previo',
+      'Videos personalizados de mejoras',
+      'Teorías aplicadas al juego',
+    ],
   },
   {
     name: 'Chall Pack',
     badge: 'RETADOR',
     price: '800 USD',
-    period: '/ mes',
     highlight: false,
     rankImg: '/ranks/challenger.png',
     rankGlow: '#ffd600',
@@ -76,6 +79,16 @@ const PLANS = [
     description: 'El programa más intensivo. Máxima dedicación para quienes van en serio al Retador.',
     cta: 'Ir al Retador',
     guarantee: true,
+    features: [
+      'Retroalimentación personalizada',
+      'Coach en vivo',
+      'Entrenamiento personalizado',
+      'Análisis previo',
+      'Videos personalizados de mejoras',
+      'Teorías aplicadas al juego',
+      'Práctica guiada',
+      'Entendimiento analítico pre y post game',
+    ],
   },
 ]
 
@@ -179,44 +192,6 @@ const TOPIC_CATEGORIES = [
   <!-- STATS -->
   <Stats />
 
-  <!-- ══════════════════ SERVICIOS ══════════════════ -->
-  <section id="servicios" class="relative z-[2] py-16 md:py-28 px-5 sm:px-8 lg:px-13">
-    <div class="max-w-6xl mx-auto">
-      <!-- Header -->
-      <div class="text-center mb-12 md:mb-20">
-        <div class="flex items-center justify-center gap-3 font-primary text-[.78rem] tracking-[4px] uppercase text-red-500 mb-4">
-          <span class="w-7 h-px bg-red-500 inline-block" />
-          Nuestros Servicios
-          <span class="w-7 h-px bg-red-500 inline-block" />
-        </div>
-        <h2 class="font-serif text-[clamp(2rem,3.5vw,3rem)] font-bold uppercase text-[#fff0f0]">
-          ¿Qué incluye el
-          <span class="bg-linear-to-r from-red-500 via-rose-400 to-orange-300 bg-clip-text text-transparent">Coaching?</span>
-        </h2>
-        <p class="font-primary text-[1rem] text-[rgba(255,210,210,.6)] mt-4 max-w-2xl mx-auto leading-relaxed">
-          Cada plan incluye un conjunto completo de servicios diseñados para maximizar tu progreso en League of Legends.
-        </p>
-      </div>
-
-      <!-- Service cards grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-        <div
-          v-for="(item, i) in INCLUDED_ALL"
-          :key="item"
-          v-reveal="i * 60"
-          class="bg-red-950/30 backdrop-blur-sm border border-red-800/20 rounded-xl p-5 flex items-start gap-3 shadow-sm hover:shadow-red-950/60 hover:border-red-600/30 transition-all duration-300"
-        >
-            <span class="text-red-400 mt-0.5 shrink-0">
-            <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/>
-            </svg>
-          </span>
-          <span class="font-primary text-[.9rem] font-semibold text-[#ffe8e8] leading-snug">{{ item }}</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- ══════════════════ PRECIOS ══════════════════ -->
   <section id="precios" class="relative z-[2] py-16 md:py-28 px-5 sm:px-8 lg:px-13">
     <div class="max-w-6xl mx-auto">
@@ -297,16 +272,26 @@ const TOPIC_CATEGORIES = [
           <!-- Price -->
           <div class="text-center mb-4">
             <span :class="['font-primary text-[2.2rem] font-black leading-none', plan.highlight ? 'text-white' : 'text-[#fff0f0]']">{{ plan.price }}</span>
-            <span :class="['font-primary text-[.85rem] ml-1', plan.highlight ? 'text-white/60' : 'text-[rgba(255,200,200,.45)]']">{{ plan.period }}</span>
           </div>
 
           <!-- Description -->
-          <p :class="['font-primary text-[.82rem] leading-relaxed text-center mb-6 flex-1', plan.highlight ? 'text-white/75' : 'text-[rgba(255,200,200,.6)]']">
+          <p :class="['font-primary text-[.82rem] leading-relaxed text-center mb-4', plan.highlight ? 'text-white/75' : 'text-[rgba(255,200,200,.6)]']">
             {{ plan.description }}
           </p>
 
-          <!-- Guarantee badge -->
-        
+          <!-- Features -->
+          <ul class="flex flex-col gap-2 mb-6 flex-1">
+            <li
+              v-for="feat in plan.features"
+              :key="feat"
+              :class="['flex items-start gap-2 font-primary text-[.8rem] leading-snug', plan.highlight ? 'text-white/80' : 'text-[rgba(255,210,210,.75)]']"
+            >
+              <svg class="w-4 h-4 shrink-0 mt-[1px]" :class="plan.highlight ? 'text-white/70' : 'text-red-400'" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/>
+              </svg>
+              {{ feat }}
+            </li>
+          </ul>
 
           <!-- CTA -->
           <a
@@ -331,7 +316,7 @@ const TOPIC_CATEGORIES = [
         <div>
           <p class="font-primary text-[.82rem] font-black uppercase tracking-[2px] text-amber-400 mb-0.5">Servicio 100% Especializado y Garantizado</p>
           <p class="font-primary text-[.85rem] text-[rgba(200,185,240,.65)] leading-snug">
-            Compra el <strong class="text-amber-400">Chall Pack</strong> por 1 mes: si no alcanzas tu meta, <strong class="text-white">te devolvemos el dinero</strong>.
+            Adquiere el <strong class="text-amber-400">Chall Pack</strong>: si al finalizar el programa no alcanzas tu meta, <strong class="text-white">te devolvemos el dinero</strong>.
           </p>
         </div>
       </div>
