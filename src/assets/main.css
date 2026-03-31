@@ -19,6 +19,8 @@
     width: 100%;
     min-height: 100vh;
     overflow-x: hidden;
+    background-color: #080102;
+    color: #fff0f0;
   }
 }
 

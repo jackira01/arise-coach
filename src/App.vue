@@ -37,7 +37,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="bg-[#faf8ff] text-[#0d0820] font-primary min-h-screen">
+  <div class="bg-[#080102] text-[#fff0f0] font-primary min-h-screen">
     <RouterView />
   </div>
 </template>

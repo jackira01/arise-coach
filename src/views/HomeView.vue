@@ -79,6 +79,13 @@ const PLANS = [
   },
 ]
 
+const WA_NUMBER = '573237242744'
+
+function whatsappUrl(planName: string): string {
+  const msg = `Hola! Me interesa el *${planName}* de AriseXR Coaching. Me gustaría agendar una reunión para conocer más detalles y comenzar a mejorar mi nivel en League of Legends. ¿Cuándo podemos hablar?`
+  return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`
+}
+
 // ── TEMAS ─────────────────────────────────────────────────
 const TOPIC_CATEGORIES = [
   {
@@ -152,7 +159,7 @@ const TOPIC_CATEGORIES = [
   <!-- Fondo fijo -->
   <div
     class="fixed inset-0 z-0 pointer-events-none"
-    style="background: radial-gradient(ellipse 55% 55% at 75% 35%, rgba(60,30,120,.36) 0%, transparent 70%), radial-gradient(ellipse 45% 65% at 20% 75%, rgba(10,30,90,.38) 0%, transparent 70%), radial-gradient(ellipse 35% 40% at 85% 85%, rgba(20,8,60,.28) 0%, transparent 70%)"
+    style="background: radial-gradient(ellipse 60% 55% at 75% 30%, rgba(160,10,10,.5) 0%, transparent 65%), radial-gradient(ellipse 50% 65% at 15% 75%, rgba(100,5,5,.55) 0%, transparent 65%), radial-gradient(ellipse 40% 40% at 85% 85%, rgba(80,0,0,.35) 0%, transparent 65%)"
   />
 
   <Header />
@@ -163,8 +170,10 @@ const TOPIC_CATEGORIES = [
     class="relative w-full min-h-screen grid grid-cols-1 md:grid-cols-2 items-center pt-16 px-5 sm:px-8 lg:px-13 pb-10 md:pb-0 overflow-hidden z-[2] gap-8 md:gap-0"
   >
     <HeroText class-name="md:pl-10" />
-    <div class="relative w-full h-64 sm:h-96 md:h-full md:min-h-150 order-first md:order-last">
-      <HeroChart />
+    <div class="relative w-full flex items-center justify-center order-first md:order-last py-4 md:py-8 md:pl-6">
+      <div class="w-[85%] sm:w-[70%] md:w-full" style="height: min(85vh, 650px)">
+        <HeroChart />
+      </div>
     </div>
   </section>
 
@@ -176,16 +185,16 @@ const TOPIC_CATEGORIES = [
     <div class="max-w-6xl mx-auto">
       <!-- Header -->
       <div class="text-center mb-12 md:mb-20">
-        <div class="flex items-center justify-center gap-3 font-primary text-[.78rem] tracking-[4px] uppercase text-violet-600 mb-4">
-          <span class="w-7 h-px bg-violet-600 inline-block" />
+        <div class="flex items-center justify-center gap-3 font-primary text-[.78rem] tracking-[4px] uppercase text-red-500 mb-4">
+          <span class="w-7 h-px bg-red-500 inline-block" />
           Nuestros Servicios
-          <span class="w-7 h-px bg-violet-600 inline-block" />
+          <span class="w-7 h-px bg-red-500 inline-block" />
         </div>
-        <h2 class="font-serif text-[clamp(2rem,3.5vw,3rem)] font-bold uppercase text-[#0d0820]">
+        <h2 class="font-serif text-[clamp(2rem,3.5vw,3rem)] font-bold uppercase text-[#fff0f0]">
           ¿Qué incluye el
-          <span class="bg-linear-to-r from-violet-700 via-blue-500 to-cyan-500 bg-clip-text text-transparent">Coaching?</span>
+          <span class="bg-linear-to-r from-red-500 via-rose-400 to-orange-300 bg-clip-text text-transparent">Coaching?</span>
         </h2>
-        <p class="font-primary text-[1rem] text-[rgba(45,25,80,.6)] mt-4 max-w-2xl mx-auto leading-relaxed">
+        <p class="font-primary text-[1rem] text-[rgba(255,210,210,.6)] mt-4 max-w-2xl mx-auto leading-relaxed">
           Cada plan incluye un conjunto completo de servicios diseñados para maximizar tu progreso en League of Legends.
         </p>
       </div>
@@ -196,14 +205,14 @@ const TOPIC_CATEGORIES = [
           v-for="(item, i) in INCLUDED_ALL"
           :key="item"
           v-reveal="i * 60"
-          class="bg-white/60 backdrop-blur-sm border border-violet-700/12 rounded-xl p-5 flex items-start gap-3 shadow-sm hover:shadow-violet-200/60 hover:border-violet-400/30 transition-all duration-300"
+          class="bg-red-950/30 backdrop-blur-sm border border-red-800/20 rounded-xl p-5 flex items-start gap-3 shadow-sm hover:shadow-red-950/60 hover:border-red-600/30 transition-all duration-300"
         >
-          <span class="text-violet-600 mt-0.5 shrink-0">
+            <span class="text-red-400 mt-0.5 shrink-0">
             <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/>
             </svg>
           </span>
-          <span class="font-primary text-[.9rem] font-semibold text-[#1a0f35] leading-snug">{{ item }}</span>
+          <span class="font-primary text-[.9rem] font-semibold text-[#ffe8e8] leading-snug">{{ item }}</span>
         </div>
       </div>
     </div>
@@ -215,16 +224,16 @@ const TOPIC_CATEGORIES = [
 
       <!-- Header -->
       <div v-reveal class="text-center mb-12 md:mb-20">
-        <div class="flex items-center justify-center gap-3 font-primary text-[.78rem] tracking-[4px] uppercase text-violet-600 mb-4">
-          <span class="w-7 h-px bg-violet-600 inline-block" />
+        <div class="flex items-center justify-center gap-3 font-primary text-[.78rem] tracking-[4px] uppercase text-red-500 mb-4">
+          <span class="w-7 h-px bg-red-500 inline-block" />
           Planes
-          <span class="w-7 h-px bg-violet-600 inline-block" />
+          <span class="w-7 h-px bg-red-500 inline-block" />
         </div>
-        <h2 class="font-serif text-[clamp(2rem,3.5vw,3rem)] font-bold uppercase text-[#0d0820]">
+        <h2 class="font-serif text-[clamp(2rem,3.5vw,3rem)] font-bold uppercase text-[#fff0f0]">
           Elige Tu
-          <span class="bg-linear-to-r from-violet-700 via-blue-500 to-cyan-500 bg-clip-text text-transparent">Plan</span>
+          <span class="bg-linear-to-r from-red-500 via-rose-400 to-orange-300 bg-clip-text text-transparent">Plan</span>
         </h2>
-        <p class="font-primary text-[1rem] text-[rgba(45,25,80,.6)] mt-4 max-w-xl mx-auto leading-relaxed">
+        <p class="font-primary text-[1rem] text-[rgba(255,210,210,.6)] mt-4 max-w-xl mx-auto leading-relaxed">
           Todos los planes incluyen los mismos beneficios. La diferencia está en la intensidad de las sesiones.
         </p>
       </div>
@@ -238,8 +247,8 @@ const TOPIC_CATEGORIES = [
           :class="[
             'relative flex flex-col rounded-2xl p-6 sm:p-7 border transition-all duration-300',
             plan.highlight
-              ? 'bg-linear-to-br from-violet-700 to-blue-600 border-violet-400/50 shadow-[0_0_60px_rgba(124,58,237,.35)] lg:scale-105'
-              : 'bg-white/70 backdrop-blur-sm border-violet-700/15 hover:shadow-violet-200/60 hover:border-violet-400/30 shadow-sm'
+              ? 'bg-linear-to-br from-red-800 to-red-600 border-red-500/40 shadow-[0_0_60px_rgba(180,20,20,.45)] lg:scale-105'
+              : 'bg-red-950/30 backdrop-blur-sm border-red-800/20 hover:shadow-red-950/60 hover:border-red-700/35 shadow-[0_0_30px_rgba(0,0,0,.5)]'
           ]"
         >
           <!-- Badge -->
@@ -266,12 +275,12 @@ const TOPIC_CATEGORIES = [
           </div>
 
           <!-- Plan name -->
-          <h3 :class="['font-serif text-[1.35rem] font-bold uppercase text-center leading-tight mb-5', plan.highlight ? 'text-white' : 'text-[#0d0820]']">
+          <h3 :class="['font-serif text-[1.35rem] font-bold uppercase text-center leading-tight mb-5', plan.highlight ? 'text-white' : 'text-[#fff0f0]']">
             {{ plan.name }}
           </h3>
 
           <!-- Details -->
-          <div :class="['flex flex-col gap-1.5 mb-4', plan.highlight ? 'text-cyan-100' : 'text-[rgba(45,25,80,.75)]']">
+          <div :class="['flex flex-col gap-1.5 mb-4', plan.highlight ? 'text-red-100' : 'text-[rgba(255,210,210,.8)]']">
             <div class="flex items-center gap-2 font-primary text-[.85rem] font-semibold">
               <span>⏱</span> {{ plan.detail1 }}
             </div>
@@ -284,50 +293,46 @@ const TOPIC_CATEGORIES = [
           </div>
 
           <!-- Divider -->
-          <div :class="['h-px mb-4', plan.highlight ? 'bg-white/20' : 'bg-violet-700/10']" />
+          <div :class="['h-px mb-4', plan.highlight ? 'bg-white/20' : 'bg-red-800/25']" />
 
           <!-- Price -->
           <div class="text-center mb-4">
-            <span :class="['font-primary text-[2.2rem] font-black leading-none', plan.highlight ? 'text-white' : 'text-[#0d0820]']">{{ plan.price }}</span>
-            <span :class="['font-primary text-[.85rem] ml-1', plan.highlight ? 'text-white/60' : 'text-[rgba(45,25,80,.45)]']">{{ plan.period }}</span>
+            <span :class="['font-primary text-[2.2rem] font-black leading-none', plan.highlight ? 'text-white' : 'text-[#fff0f0]']">{{ plan.price }}</span>
+            <span :class="['font-primary text-[.85rem] ml-1', plan.highlight ? 'text-white/60' : 'text-[rgba(255,200,200,.45)]']">{{ plan.period }}</span>
           </div>
 
           <!-- Description -->
-          <p :class="['font-primary text-[.82rem] leading-relaxed text-center mb-6 flex-1', plan.highlight ? 'text-white/75' : 'text-[rgba(45,25,80,.6)]']">
+          <p :class="['font-primary text-[.82rem] leading-relaxed text-center mb-6 flex-1', plan.highlight ? 'text-white/75' : 'text-[rgba(255,200,200,.6)]']">
             {{ plan.description }}
           </p>
 
           <!-- Guarantee badge -->
-          <div
-            v-if="plan.guarantee"
-            class="mb-4 bg-amber-400/20 border border-amber-400/40 rounded-xl px-3 py-2.5 text-center"
-          >
-            <p class="font-primary text-[.72rem] font-bold text-amber-700 leading-snug uppercase tracking-wide">
-              🔒 Si no alcanzas tu meta en 1 mes,<br />¡te devolvemos el dinero!
-            </p>
-          </div>
+        
 
           <!-- CTA -->
-          <button
+          <a
+            :href="whatsappUrl(plan.name)"
+            target="_blank"
+            rel="noopener noreferrer"
             :class="[
-              'w-full py-3 font-primary text-[.87rem] font-bold tracking-[2px] uppercase rounded-xl cursor-pointer transition-all duration-250',
+              'w-full py-3 font-primary text-[.87rem] font-bold tracking-[2px] uppercase rounded-xl cursor-pointer transition-all duration-250 text-center block',
               plan.highlight
-                ? 'bg-white text-violet-700 hover:bg-white/90 shadow-[0_4px_20px_rgba(0,0,0,.2)]'
-                : 'bg-linear-to-br from-[#3a68c0] to-violet-600 text-white hover:brightness-110 shadow-[0_0_20px_rgba(124,58,237,.3)]'
+                ? 'bg-white text-red-700 hover:bg-white/90 shadow-[0_4px_20px_rgba(0,0,0,.2)]'
+                : 'bg-linear-to-br from-red-700 to-red-500 text-white hover:brightness-110 shadow-[0_0_20px_rgba(180,20,20,.35)]'
             ]"
           >
             {{ plan.cta }}
-          </button>
+          </a>
         </div>
       </div>
 
       <!-- Guarantee banner -->
-      <div v-reveal class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 bg-white/60 backdrop-blur-sm border border-amber-400/30 rounded-2xl px-8 py-5 shadow-sm max-w-3xl mx-auto">
+      <div v-reveal class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 bg-amber-950/40 backdrop-blur-sm border border-amber-400/25 rounded-2xl px-8 py-5 shadow-sm max-w-3xl mx-auto">
         <div class="text-3xl shrink-0">🛡️</div>
         <div>
-          <p class="font-primary text-[.82rem] font-black uppercase tracking-[2px] text-amber-700 mb-0.5">Servicio 100% Especializado y Garantizado</p>
-          <p class="font-primary text-[.85rem] text-[rgba(45,25,80,.65)] leading-snug">
-            Compra el <strong class="text-amber-600">Chall Pack</strong> por 1 mes: si no alcanzas tu meta, <strong>te devolvemos el dinero</strong>.
+          <p class="font-primary text-[.82rem] font-black uppercase tracking-[2px] text-amber-400 mb-0.5">Servicio 100% Especializado y Garantizado</p>
+          <p class="font-primary text-[.85rem] text-[rgba(200,185,240,.65)] leading-snug">
+            Compra el <strong class="text-amber-400">Chall Pack</strong> por 1 mes: si no alcanzas tu meta, <strong class="text-white">te devolvemos el dinero</strong>.
           </p>
         </div>
       </div>
@@ -339,16 +344,16 @@ const TOPIC_CATEGORIES = [
     <div class="max-w-6xl mx-auto">
       <!-- Header -->
       <div v-reveal class="text-center mb-12 md:mb-20">
-        <div class="flex items-center justify-center gap-3 font-primary text-[.78rem] tracking-[4px] uppercase text-violet-600 mb-4">
-          <span class="w-7 h-px bg-violet-600 inline-block" />
+        <div class="flex items-center justify-center gap-3 font-primary text-[.78rem] tracking-[4px] uppercase text-red-500 mb-4">
+          <span class="w-7 h-px bg-red-500 inline-block" />
           Currículo
-          <span class="w-7 h-px bg-violet-600 inline-block" />
+          <span class="w-7 h-px bg-red-500 inline-block" />
         </div>
-        <h2 class="font-serif text-[clamp(2rem,3.5vw,3rem)] font-bold uppercase text-[#0d0820]">
+        <h2 class="font-serif text-[clamp(2rem,3.5vw,3rem)] font-bold uppercase text-[#fff0f0]">
           Temas que
-          <span class="bg-linear-to-r from-violet-700 via-blue-500 to-cyan-500 bg-clip-text text-transparent">se ven</span>
+          <span class="bg-linear-to-r from-red-500 via-rose-400 to-orange-300 bg-clip-text text-transparent">se ven</span>
         </h2>
-        <p class="font-primary text-[1rem] text-[rgba(45,25,80,.6)] mt-4 max-w-2xl mx-auto leading-relaxed">
+        <p class="font-primary text-[1rem] text-[rgba(255,210,210,.6)] mt-4 max-w-2xl mx-auto leading-relaxed">
           Un temario completo que cubre todas las dimensiones del juego competitivo.
         </p>
       </div>
@@ -359,19 +364,19 @@ const TOPIC_CATEGORIES = [
           v-for="(cat, i) in TOPIC_CATEGORIES"
           :key="cat.title"
           v-reveal="i * 120"
-          class="bg-white/60 backdrop-blur-sm border border-violet-700/12 rounded-2xl p-8 shadow-sm hover:shadow-violet-200/40 hover:border-violet-400/25 transition-all duration-300"
+          class="bg-red-950/30 backdrop-blur-sm border border-red-800/20 rounded-2xl p-8 shadow-sm hover:shadow-red-950/50 hover:border-red-700/30 transition-all duration-300"
         >
           <div class="flex items-center gap-3 mb-6">
             <span class="text-2xl">{{ cat.icon }}</span>
-            <h3 class="font-serif text-[1.05rem] font-bold uppercase tracking-[1px] text-[#0d0820]">{{ cat.title }}</h3>
+            <h3 class="font-serif text-[1.05rem] font-bold uppercase tracking-[1px] text-[#fff0f0]">{{ cat.title }}</h3>
           </div>
           <ul class="grid grid-cols-1 gap-2">
             <li
               v-for="topic in cat.topics"
               :key="topic"
-              class="flex items-center gap-2.5 font-primary text-[.85rem] text-[rgba(45,25,80,.7)]"
+              class="flex items-center gap-2.5 font-primary text-[.85rem] text-[rgba(255,210,210,.7)]"
             >
-              <span class="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0" />
+              <span class="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
               {{ topic }}
             </li>
           </ul>
@@ -383,16 +388,16 @@ const TOPIC_CATEGORIES = [
   <!-- ══════════════════ SOBRE NOSOTROS ══════════════════ -->
   <section id="sobre-nosotros" class="relative z-[2] py-16 md:py-28 px-5 sm:px-8 lg:px-13">
     <div class="max-w-4xl mx-auto text-center">
-      <div v-reveal class="flex items-center justify-center gap-3 font-primary text-[.78rem] tracking-[4px] uppercase text-violet-600 mb-4">
-        <span class="w-7 h-px bg-violet-600 inline-block" />
+      <div v-reveal class="flex items-center justify-center gap-3 font-primary text-[.78rem] tracking-[4px] uppercase text-red-500 mb-4">
+        <span class="w-7 h-px bg-red-500 inline-block" />
         Sobre Nosotros
-        <span class="w-7 h-px bg-violet-600 inline-block" />
+        <span class="w-7 h-px bg-red-500 inline-block" />
       </div>
-      <h2 v-reveal="100" class="font-serif text-[clamp(2rem,3.5vw,3rem)] font-bold uppercase text-[#0d0820] mb-6">
+      <h2 v-reveal="100" class="font-serif text-[clamp(2rem,3.5vw,3rem)] font-bold uppercase text-[#fff0f0] mb-6">
         Coaches de
-        <span class="bg-linear-to-r from-violet-700 via-blue-500 to-cyan-500 bg-clip-text text-transparent">Élite</span>
+        <span class="bg-linear-to-r from-red-500 via-rose-400 to-orange-300 bg-clip-text text-transparent">Élite</span>
       </h2>
-      <p v-reveal="200" class="font-primary text-[1.05rem] leading-[1.9] text-[rgba(45,25,80,.65)] max-w-2xl mx-auto mb-10">
+      <p v-reveal="200" class="font-primary text-[1.05rem] leading-[1.9] text-[rgba(255,210,210,.65)] max-w-2xl mx-auto mb-10">
         Somos un equipo de coaches con rango Challenger dedicados a transformar tu forma de jugar League of Legends.
         Combinamos análisis estadístico, psicología del rendimiento y entrenamiento práctico para llevarte al siguiente nivel.
       </p>
@@ -401,7 +406,7 @@ const TOPIC_CATEGORIES = [
           v-for="(val, i) in ['Resultados Garantizados', 'Coaches Challenger', 'Método Probado', 'Comunidad Activa']"
           :key="val"
           v-reveal="300 + i * 80"
-          class="px-5 py-2.5 bg-white/60 border border-violet-700/15 rounded-full font-primary text-[.82rem] font-semibold text-violet-700 tracking-[1px] backdrop-blur-sm"
+          class="px-5 py-2.5 bg-red-950/40 border border-red-800/25 rounded-full font-primary text-[.82rem] font-semibold text-red-400 tracking-[1px] backdrop-blur-sm"
         >
           {{ val }}
         </div>
@@ -410,8 +415,8 @@ const TOPIC_CATEGORIES = [
   </section>
 
   <!-- Footer -->
-  <footer class="relative z-[2] border-t border-violet-700/10 py-8 px-5 sm:px-8 lg:px-13 text-center">
-    <p class="font-primary text-[.8rem] text-[rgba(45,25,80,.4)] tracking-[1px]">
+  <footer class="relative z-[2] border-t border-red-900/25 py-8 px-5 sm:px-8 lg:px-13 text-center">
+    <p class="font-primary text-[.8rem] text-[rgba(255,180,180,.3)] tracking-[1px]">
       © {{ new Date().getFullYear() }} Tecnologia COL. Todos los derechos reservados.
     </p>
   </footer>

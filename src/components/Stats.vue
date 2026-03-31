@@ -66,23 +66,25 @@ onUnmounted(() => {
 <template>
   <section
     ref="sectionRef"
-    class="relative z-10 grid grid-cols-2 md:flex md:justify-center border-t border-violet-700/10 bg-white/55 backdrop-blur-[6px]"
+    class="relative z-10 grid grid-cols-2 md:flex md:justify-center border-t border-red-900/30 bg-[#0a0102]/85 backdrop-blur-[6px]"
   >
     <div
       v-for="(stat, i) in STATS"
       :key="stat.label"
       class="flex-1 max-w-65 py-7 sm:py-10 px-5 sm:px-11 text-center transition-[opacity,transform] duration-650 ease-[ease]"
       :class="[
-        i % 2 === 0 ? 'border-r border-violet-700/12' : '',
-        i < 2 ? 'border-b md:border-b-0 border-violet-700/12' : '',
+        i % 2 === 0 ? 'border-r border-red-900/25' : '',
+        i < 2 ? 'border-b md:border-b-0 border-red-900/25' : '',
         'md:border-r md:last:border-r-0 md:border-b-0',
       ]"
       :style="{ opacity: shown[i] ? 1 : 0, transform: shown[i] ? 'translateY(0)' : 'translateY(20px)' }"
     >
-      <div class="font-primary text-[2.2rem] sm:text-[3rem] font-black bg-linear-to-br from-violet-700 to-blue-500 bg-clip-text text-transparent mb-1 sm:mb-2 leading-none">
+      <div class="font-primary text-[2.2rem] sm:text-[3rem] font-black bg-linear-to-br from-red-400 to-rose-500 bg-clip-text text-transparent mb-1 sm:mb-2 leading-none">
         {{ formatNum(stat.target, counts[i] ?? 0) }}{{ stat.suffix }}
       </div>
-      <div class="font-primary text-[.68rem] sm:text-[.78rem] tracking-[2px] sm:tracking-[2.5px] text-[rgba(60,30,100,.5)] uppercase font-semibold">
+      <div
+        class="font-primary text-[.68rem] sm:text-[.78rem] tracking-[2px] sm:tracking-[2.5px] text-[rgba(255,180,180,.55)] uppercase font-semibold"
+      >
         {{ stat.label }}
       </div>
     </div>
