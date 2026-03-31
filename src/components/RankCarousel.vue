@@ -35,26 +35,26 @@ function nextRank() {
       <!-- Emblema -->
       <div
         :class="`relative select-none ${large ? 'w-36 h-36' : 'w-24 h-24'}`"
-        :style="{ filter: `drop-shadow(0 0 ${large ? '22px' : '16px'} ${ranks[rankIndex].glow}99)`, transition: 'filter 0.3s ease' }"
+        :style="{ filter: `drop-shadow(0 0 ${large ? '22px' : '16px'} ${ranks[rankIndex]!.glow}99)`, transition: 'filter 0.3s ease' }"
       >
         <img
-          :key="ranks[rankIndex].img"
-          :src="ranks[rankIndex].img"
-          :alt="ranks[rankIndex].name"
+          :key="ranks[rankIndex]!.img"
+          :src="ranks[rankIndex]!.img"
+          :alt="ranks[rankIndex]!.name"
           class="w-full h-full object-contain"
         />
       </div>
 
       <!-- Nombre + división -->
       <div class="font-primary font-bold tracking-[2px] text-sm uppercase text-[#0d0820] text-center leading-tight">
-        {{ ranks[rankIndex].name }}
-        <span v-if="showTiers && ranks[rankIndex].hasTiers" class="ml-1.5 text-violet-600">
+        {{ ranks[rankIndex]!.name }}
+        <span v-if="showTiers && ranks[rankIndex]!.hasTiers" class="ml-1.5 text-violet-600">
           {{ ROMAN_TIERS[rankTier] }}
         </span>
       </div>
 
       <!-- Selector de tier -->
-      <div v-if="showTiers && ranks[rankIndex].hasTiers" class="flex gap-1.5">
+      <div v-if="showTiers && ranks[rankIndex]!.hasTiers" class="flex gap-1.5">
         <button
           v-for="(tier, ti) in ROMAN_TIERS"
           :key="tier"
@@ -73,7 +73,7 @@ function nextRank() {
           :key="i"
           @click="emit('update:rankIndex', i)"
           class="h-1.5 rounded-full transition-all duration-300"
-          :style="{ width: i === rankIndex ? '16px' : '6px', background: i === rankIndex ? ranks[rankIndex].glow : 'rgba(124,58,237,.22)' }"
+          :style="{ width: i === rankIndex ? '16px' : '6px', background: i === rankIndex ? ranks[rankIndex]!.glow : 'rgba(124,58,237,.22)' }"
         />
       </div>
     </div>

@@ -26,7 +26,7 @@ let observer: IntersectionObserver | null = null
 function animateStat(index: number) {
   const duration = 1800
   let startTime: number | null = null
-  const target = STATS[index].target
+  const target = STATS[index]!.target
   const raf = (timestamp: number) => {
     if (!startTime) startTime = timestamp
     const progress = Math.min((timestamp - startTime) / duration, 1)
@@ -39,7 +39,9 @@ function animateStat(index: number) {
 
 onMounted(() => {
   observer = new IntersectionObserver(
-    ([entry]) => {
+    (entries) => {
+      const entry = entries[0]
+      if (!entry) return
       if (entry.isIntersecting) {
         visible.value = true
         STATS.forEach((_, i) => {
@@ -78,7 +80,7 @@ onUnmounted(() => {
       :style="{ opacity: shown[i] ? 1 : 0, transform: shown[i] ? 'translateY(0)' : 'translateY(20px)' }"
     >
       <div class="font-primary text-[2.2rem] sm:text-[3rem] font-black bg-linear-to-br from-violet-700 to-blue-500 bg-clip-text text-transparent mb-1 sm:mb-2 leading-none">
-        {{ formatNum(stat.target, counts[i]) }}{{ stat.suffix }}
+        {{ formatNum(stat.target, counts[i] ?? 0) }}{{ stat.suffix }}
       </div>
       <div class="font-primary text-[.68rem] sm:text-[.78rem] tracking-[2px] sm:tracking-[2.5px] text-[rgba(60,30,100,.5)] uppercase font-semibold">
         {{ stat.label }}

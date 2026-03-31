@@ -120,6 +120,7 @@ const total = computed(() => Math.max(0, subtotal.value - discountAmt.value))
 
 function rankDisplayName(idx: number, tier: number) {
   const r = RANKS[idx]
+  if (!r) return idx.toString()
   return r.hasTiers ? `${r.name} ${ROMAN_TIERS[tier]}` : r.name
 }
 </script>
@@ -190,7 +191,7 @@ function rankDisplayName(idx: number, tier: number) {
               <!-- Card Rango -->
               <div
                 class="rounded-xl border border-violet-700/15 overflow-hidden"
-                :style="{ background: `linear-gradient(to bottom, ${RANKS[s.rankIndex].glow}80 0%, transparent 50%), rgba(255,255,255,0.68)`, backdropFilter: 'blur(10px)' }"
+                :style="{ background: `linear-gradient(to bottom, ${RANKS[s.rankIndex]?.glow ?? '#7c3aed'}80 0%, transparent 50%), rgba(255,255,255,0.68)`, backdropFilter: 'blur(10px)' }"
               >
                 <div class="px-5 py-4 border-b border-violet-700/10 flex items-center justify-between">
                   <div class="font-primary font-bold text-sm tracking-[2px] uppercase text-[#0d0820]">Rango Actual</div>
@@ -302,7 +303,7 @@ function rankDisplayName(idx: number, tier: number) {
               <!-- Rango Actual -->
               <div
                 class="rounded-xl border border-violet-700/15 overflow-hidden"
-                :style="{ background: `linear-gradient(to bottom, ${RANKS[s.rankIndex].glow}80 0%, transparent 50%), rgba(255,255,255,0.68)`, backdropFilter: 'blur(10px)' }"
+                :style="{ background: `linear-gradient(to bottom, ${RANKS[s.rankIndex]?.glow ?? '#7c3aed'}80 0%, transparent 50%), rgba(255,255,255,0.68)`, backdropFilter: 'blur(10px)' }"
               >
                 <div class="px-5 py-4 border-b border-violet-700/10">
                   <div class="font-primary font-bold text-sm tracking-[2px] uppercase text-[#0d0820]">Rango Actual</div>
@@ -322,7 +323,7 @@ function rankDisplayName(idx: number, tier: number) {
               <!-- Rango Deseado -->
               <div
                 class="rounded-xl border border-violet-700/15 overflow-hidden"
-                :style="{ background: `linear-gradient(to bottom, ${RANKS[s.rankTargetIndex].glow}80 0%, transparent 50%), rgba(255,255,255,0.68)`, backdropFilter: 'blur(10px)' }"
+                :style="{ background: `linear-gradient(to bottom, ${RANKS[s.rankTargetIndex]?.glow ?? '#7c3aed'}80 0%, transparent 50%), rgba(255,255,255,0.68)`, backdropFilter: 'blur(10px)' }"
               >
                 <div class="px-5 py-4 border-b border-violet-700/10">
                   <div class="font-primary font-bold text-sm tracking-[2px] uppercase text-[#0d0820]">Rango Deseado</div>
