@@ -3,6 +3,7 @@ import Header from '@/components/Header.vue'
 import HeroText from '@/components/HeroText.vue'
 import HeroChart from '@/components/HeroChart.vue'
 import Stats from '@/components/Stats.vue'
+import ReviewCarousel from '@/components/ReviewCarousel.vue'
 
 // ── PRECIOS ────────────────────────────────────────────────
 const PLANS = [
@@ -394,6 +395,29 @@ const TOPIC_CATEGORIES = [
         >
           {{ val }}
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ RESEÑAS ══════════════════ -->
+  <section id="resenas" class="relative z-[2] py-16 md:py-28 px-5 sm:px-8 lg:px-13">
+    <div class="max-w-6xl mx-auto">
+      <div v-reveal class="text-center mb-12 md:mb-20">
+        <div class="flex items-center justify-center gap-3 font-primary text-[.78rem] tracking-[4px] uppercase text-red-500 mb-4">
+          <span class="w-7 h-px bg-red-500 inline-block" />
+          Reseñas
+          <span class="w-7 h-px bg-red-500 inline-block" />
+        </div>
+        <h2 class="font-serif text-[clamp(2rem,3.5vw,3rem)] font-bold uppercase text-[#fff0f0]">
+          Lo que dicen
+          <span class="bg-linear-to-r from-red-500 via-rose-400 to-orange-300 bg-clip-text text-transparent">Nuestros Clientes</span>
+        </h2>
+        <p class="font-primary text-[1rem] text-[rgba(255,210,210,.6)] mt-4 max-w-xl mx-auto leading-relaxed">
+          Resultados reales de jugadores que confiaron en nosotros.
+        </p>
+      </div>
+      <div v-reveal="200">
+        <ReviewCarousel />
       </div>
     </div>
   </section>
