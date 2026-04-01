@@ -19,6 +19,7 @@ const PLANS = [
     detail3: '6 – 8 temas',
     description: 'El punto de partida ideal para comenzar a mejorar con estructura y guía profesional.',
     cta: 'Elegir Silver',
+    stripeUrl: 'https://buy.stripe.com/dRmeVeguB3Dv1XUcLV1Nu01',
     guarantee: false,
     features: [
       'Retroalimentación personalizada',
@@ -37,6 +38,7 @@ const PLANS = [
     detail3: '8 – 10 temas',
     description: 'Para jugadores que quieren progresar de forma constante y afianzar sus bases.',
     cta: 'Elegir Esmerald',
+    stripeUrl: 'https://buy.stripe.com/bJe6oI5PX5LDeKG27h1Nu02',
     guarantee: false,
     features: [
       'Retroalimentación personalizada',
@@ -57,6 +59,7 @@ const PLANS = [
     detail3: '9 – 10 temas',
     description: 'El equilibrio perfecto entre intensidad y resultados para escalar de rango rápidamente.',
     cta: 'Elegir Diamond',
+    stripeUrl: 'https://buy.stripe.com/00w5kEa6dde5auq13d1Nu03',
     guarantee: false,
     features: [
       'Retroalimentación personalizada',
@@ -79,6 +82,7 @@ const PLANS = [
     detail3: '12 – 14 temas',
     description: 'El programa más intensivo. Máxima dedicación para quienes van en serio al Retador.',
     cta: 'Ir al Retador',
+    stripeUrl: 'https://buy.stripe.com/fZucN6celgqhcCydPZ1Nu00',
     guarantee: true,
     features: [
       'Retroalimentación personalizada',
@@ -103,7 +107,7 @@ function discordUrl(): string {
 const TOPIC_CATEGORIES = [
   {
     title: 'Mentalidad y Control Emocional',
-    icon: '🧠',
+    icon: '',
     topics: [
       'Cómo dejar el tilt',
       'Mentalidad para rankeds',
@@ -119,7 +123,7 @@ const TOPIC_CATEGORIES = [
   },
   {
     title: 'Macro Game',
-    icon: '🗺️',
+    icon: '',
     topics: [
       'Cuándo hacer objetivos (dragón, barón)',
       'Rotaciones eficientes',
@@ -135,7 +139,7 @@ const TOPIC_CATEGORIES = [
   },
   {
     title: 'Micro Game y Mecánicas',
-    icon: '⚡',
+    icon: '',
     topics: [
       'Mejora de reflejos',
       'Posicionamiento en teamfights',
@@ -151,7 +155,7 @@ const TOPIC_CATEGORIES = [
   },
   {
     title: 'Estrategia de Ranked',
-    icon: '🏆',
+    icon: '',
     topics: [
       'Cómo trakear',
       'Errores comunes por elo',
@@ -296,7 +300,7 @@ const TOPIC_CATEGORIES = [
 
           <!-- CTA -->
           <a
-            :href="discordUrl()"
+            :href="plan.stripeUrl"
             target="_blank"
             rel="noopener noreferrer"
             :class="[

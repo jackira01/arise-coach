@@ -32,16 +32,12 @@ defineProps<{ className?: string }>()
 
     <!-- CTAs -->
     <div class="flex gap-3 flex-wrap">
-      <button
-        class="px-6 sm:px-8 py-3 sm:py-3.25 bg-linear-to-br from-red-700 to-red-500 text-white border-none cursor-pointer font-primary text-[.88rem] sm:text-[.95rem] font-bold tracking-[2px] uppercase [clip-path:polygon(8px_0%,100%_0%,calc(100%-8px)_100%,0%_100%)] shadow-[0_0_28px_rgba(200,30,30,.5)] transition-[filter,transform] duration-250 hover:brightness-125 hover:-translate-y-0.5"
-      >
-        Comenzar Ahora
-      </button>
-      <button
+      <a
+        href="#precios"
         class="px-5 sm:px-7 py-3 sm:py-3.25 bg-transparent text-red-400 border border-red-600/35 cursor-pointer font-primary text-[.88rem] sm:text-[.95rem] font-semibold tracking-[2px] uppercase [clip-path:polygon(8px_0%,100%_0%,calc(100%-8px)_100%,0%_100%)] transition-[border-color,color,background-color] duration-250 hover:border-red-400 hover:text-red-300 hover:bg-red-500/10"
       >
         Ver Servicios
-      </button>
+      </a>
     </div>
   </div>
 </template>
