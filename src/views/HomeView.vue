@@ -319,9 +319,9 @@ const TOPIC_CATEGORIES = [
       <div v-reveal class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 bg-amber-950/40 backdrop-blur-sm border border-amber-400/25 rounded-2xl px-8 py-5 shadow-sm max-w-3xl mx-auto">
         <div class="text-3xl shrink-0">🛡️</div>
         <div>
-          <p class="font-primary text-[.82rem] font-black uppercase tracking-[2px] text-amber-400 mb-0.5">Servicio 100% Especializado y Garantizado</p>
+          <p class="font-primary text-[.82rem] font-black uppercase tracking-[2px] text-amber-400 mb-0.5">Garantía de Subida de Rango</p>
           <p class="font-primary text-[.85rem] text-[rgba(200,185,240,.65)] leading-snug">
-            Adquiere el <strong class="text-amber-400">Chall Pack</strong>: si al finalizar el programa no alcanzas tu meta, <strong class="text-white">te devolvemos el dinero</strong>.
+            Con el <strong class="text-amber-400">Retador Pack</strong> (4–5 sesiones) cubres <strong class="text-white">todos los temas</strong> del programa. Si los completas y no subes de rango, <strong class="text-white">te devolvemos el dinero</strong>.
           </p>
         </div>
       </div>
