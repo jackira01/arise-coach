@@ -54,9 +54,9 @@ export default function ChatPanel() {
     }
 
     return (
-        <div className="flex flex-col gap-5 h-full">
+        <div className="flex flex-col gap-5" style={{ height: 'calc(100vh - 9rem)' }}>
             {/* Header */}
-            <div>
+            <div className="shrink-0">
                 <div className="flex items-center gap-3 font-primary text-[.7rem] tracking-[4px] uppercase text-red-500 mb-2">
                     <span className="w-5 h-px bg-red-500 inline-block" />
                     Chat
@@ -64,10 +64,10 @@ export default function ChatPanel() {
                 <h2 className="font-serif text-2xl font-bold uppercase text-[#fff0f0]">Chat con tu Coach</h2>
             </div>
 
-            {/* Chat container */}
-            <div className="bg-red-950/20 backdrop-blur-sm border border-red-800/20 rounded-2xl flex flex-col overflow-hidden" style={{ height: '540px' }}>
+            {/* Chat container — fills remaining height */}
+            <div className="bg-red-950/20 backdrop-blur-sm border border-red-800/20 rounded-2xl flex flex-col overflow-hidden flex-1 min-h-0">
                 {/* Coach info bar */}
-                <div className="flex items-center gap-3 px-5 py-3.5 border-b border-red-800/20 bg-red-950/30">
+                <div className="flex items-center gap-3 px-5 py-3.5 border-b border-red-800/20 bg-red-950/30 shrink-0">
                     <div className="w-9 h-9 rounded-full bg-linear-to-br from-red-700 to-red-500 flex items-center justify-center text-white font-bold text-sm font-primary shrink-0">
                         C
                     </div>
@@ -81,7 +81,7 @@ export default function ChatPanel() {
                 </div>
 
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3 scroll-smooth">
+                <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3 scroll-smooth min-h-0">
                     {messages.map((msg) => (
                         <div key={msg.id} className={`flex gap-2.5 ${msg.from === 'student' ? 'flex-row-reverse' : ''}`}>
                             {/* Avatar */}
@@ -107,7 +107,7 @@ export default function ChatPanel() {
                 </div>
 
                 {/* Input */}
-                <form onSubmit={sendMessage} className="flex items-center gap-3 px-4 py-3 border-t border-red-800/20 bg-red-950/30">
+                <form onSubmit={sendMessage} className="flex items-center gap-3 px-4 py-3 border-t border-red-800/20 bg-red-950/30 shrink-0">
                     <input
                         type="text"
                         value={input}

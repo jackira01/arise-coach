@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useSession } from 'next-auth/react'
 
 const NAV_LINKS = [
     { label: 'Precios', href: '#precios' },
@@ -11,6 +12,7 @@ const NAV_LINKS = [
 
 export default function Header() {
     const [menuOpen, setMenuOpen] = useState(false)
+    const { data: session } = useSession()
 
     return (
         <nav className="fixed top-0 left-0 right-0 z-[200] bg-[#080102]/94 backdrop-blur-[12px] border-b border-red-800/20">
@@ -21,7 +23,7 @@ export default function Header() {
                 </Link>
 
                 {/* Desktop nav */}
-                <ul className="hidden md:flex gap-8 lg:gap-11 list-none">
+                <ul className="hidden md:flex items-center gap-8 lg:gap-11 list-none">
                     {NAV_LINKS.map((link) => (
                         <li key={link.label}>
                             <a
@@ -32,6 +34,14 @@ export default function Header() {
                             </a>
                         </li>
                     ))}
+                    <li>
+                        <Link
+                            href={session ? '/cuenta' : '/login'}
+                            className="text-[rgba(255,210,210,.85)] font-primary text-[.85rem] lg:text-[.9rem] font-semibold tracking-[2px] uppercase no-underline transition-colors duration-250 hover:text-red-400"
+                        >
+                            {session ? 'Cuenta' : 'Iniciar sesión'}
+                        </Link>
+                    </li>
                 </ul>
 
                 {/* Hamburger */}
@@ -60,6 +70,15 @@ export default function Header() {
                             </a>
                         </li>
                     ))}
+                    <li>
+                        <Link
+                            href={session ? '/cuenta' : '/login'}
+                            className="block py-3 px-2 text-[rgba(255,210,210,.85)] font-primary text-[.95rem] font-semibold tracking-[2px] uppercase no-underline transition-colors duration-200 hover:text-red-400"
+                            onClick={() => setMenuOpen(false)}
+                        >
+                            {session ? 'Cuenta' : 'Iniciar sesión'}
+                        </Link>
+                    </li>
                 </ul>
             </div>
         </nav>

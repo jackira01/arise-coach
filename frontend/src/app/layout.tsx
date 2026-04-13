@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import LenisProvider from '@/components/LenisProvider'
+import SessionProvider from '@/components/SessionProvider'
 
 export const metadata: Metadata = {
     title: 'Arise Coach — League of Legends Coaching',
@@ -23,9 +24,11 @@ export default function RootLayout({
                 />
             </head>
             <body className="bg-[#080102] text-[#fff0f0] font-primary min-h-screen">
-                <LenisProvider>
-                    {children}
-                </LenisProvider>
+                <SessionProvider>
+                    <LenisProvider>
+                        {children}
+                    </LenisProvider>
+                </SessionProvider>
             </body>
         </html>
     )
