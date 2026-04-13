@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+/* ── FUENTES PERSONALIZADAS ── */
+@theme {
+  --font-primary: 'Atkinson Hyperlegible', sans-serif;
+  --font-serif: 'Domine', serif;
+  --font-code: 'Google Sans Code', monospace;
+  --font-cjk: 'Noto Serif SC', serif;
+}
+
+/* ── BASE ── */
+@layer base {
+  html {
+    width: 100%;
+    overflow-x: hidden;
+  }
+  body {
+    width: 100%;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-color: #080102;
+    color: #fff0f0;
+  }
+}
+
+/* ── KEYFRAMES ── */
+@keyframes textReveal {
+  from { opacity: 0; transform: translateX(-32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes chartReveal {
+  from { opacity: 0; transform: translateX(40px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes runeDrift {
+  0%   { transform: translateY(0) rotate(0deg); opacity: .05; }
+  50%  { opacity: .13; }
+  100% { transform: translateY(-35px) rotate(18deg); opacity: .05; }
+}
+
+@keyframes floatY {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-18px); }
+}
