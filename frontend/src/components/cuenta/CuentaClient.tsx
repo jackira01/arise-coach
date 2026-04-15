@@ -2,24 +2,38 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useSession } from 'next-auth/react'
 import SeguimientoPanel from '@/components/cuenta/SeguimientoPanel'
 import ChatPanel from '@/components/cuenta/ChatPanel'
 import FacturacionPanel from '@/components/cuenta/FacturacionPanel'
 import PaquetesPanel from '@/components/cuenta/PaquetesPanel'
+import TemasPanel from '@/components/cuenta/TemasPanel'
+import UserSearchFilter from '@/components/cuenta/UserSearchFilter'
 import { signOut } from 'next-auth/react'
+import type { AdminUserSummary } from '@/lib/api'
 
-type Tab = 'seguimiento' | 'chat' | 'facturacion' | 'paquetes'
+type Tab = 'seguimiento' | 'chat' | 'facturacion' | 'paquetes' | 'temas'
 
-const TABS: { id: Tab; label: string; icon: string }[] = [
+const USER_TABS: { id: Tab; label: string; icon: string }[] = [
     { id: 'seguimiento', label: 'Seguimiento', icon: '📈' },
     { id: 'chat', label: 'Chat', icon: '💬' },
     { id: 'facturacion', label: 'Facturación', icon: '🧾' },
     { id: 'paquetes', label: 'Paquetes', icon: '📦' },
 ]
 
+const ADMIN_TABS: { id: Tab; label: string; icon: string }[] = [
+    ...USER_TABS,
+    { id: 'temas', label: 'Temas', icon: '📚' },
+]
+
 export default function CuentaClient() {
+    const { data: session } = useSession()
+    const isAdmin = (session?.user as { role?: string } | undefined)?.role === 'admin'
+    const TABS = isAdmin ? ADMIN_TABS : USER_TABS
+
     const [activeTab, setActiveTab] = useState<Tab>('seguimiento')
     const [sidebarOpen, setSidebarOpen] = useState(false)
+    const [selectedUser, setSelectedUser] = useState<AdminUserSummary | null>(null)
 
     function handleTabClick(id: Tab) {
         setActiveTab(id)
@@ -89,17 +103,24 @@ export default function CuentaClient() {
                     <span className="font-primary text-[.65rem] uppercase tracking-[4px] text-red-500/70">Navegación</span>
                 </div>
 
+                {/* Admin user filter — top of sidebar, above nav tabs */}
+                {isAdmin && (
+                    <div className="px-3 pt-4 pb-3 border-b border-red-800/15 shrink-0 relative z-50">
+                        <span className="block font-primary text-[.6rem] uppercase tracking-[3px] text-red-500/60 mb-2 px-1">Ver como</span>
+                        <UserSearchFilter selected={selectedUser} onSelect={setSelectedUser} />
+                    </div>
+                )}
+
                 {/* Nav tabs */}
                 <nav className="flex flex-col gap-1.5 px-3 pt-5 pb-4 flex-1">
                     {TABS.map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => handleTabClick(tab.id)}
-                            className={`flex items-center gap-3 px-4 py-3.5 rounded-xl font-primary text-[.88rem] font-semibold tracking-[.5px] transition-all duration-200 text-left ${
-                                activeTab === tab.id
-                                    ? 'bg-red-700/80 text-white shadow-[0_0_20px_rgba(180,20,20,.35)]'
-                                    : 'text-[rgba(255,210,210,.6)] hover:bg-red-950/50 hover:text-[#fff0f0]'
-                            }`}
+                            className={`flex items-center gap-3 px-4 py-3.5 rounded-xl font-primary text-[.88rem] font-semibold tracking-[.5px] transition-all duration-200 text-left ${activeTab === tab.id
+                                ? 'bg-red-700/80 text-white shadow-[0_0_20px_rgba(180,20,20,.35)]'
+                                : 'text-[rgba(255,210,210,.6)] hover:bg-red-950/50 hover:text-[#fff0f0]'
+                                }`}
                         >
                             <span className="text-base w-5 text-center">{tab.icon}</span>
                             <span>{tab.label}</span>
@@ -126,10 +147,11 @@ export default function CuentaClient() {
 
             {/* ── Main content — full width ──────────────────────────── */}
             <main className="relative z-10 max-w-7xl mx-auto px-5 sm:px-10 py-8">
-                {activeTab === 'seguimiento' && <SeguimientoPanel />}
-                {activeTab === 'chat' && <ChatPanel />}
-                {activeTab === 'facturacion' && <FacturacionPanel />}
-                {activeTab === 'paquetes' && <PaquetesPanel />}
+                {activeTab === 'seguimiento' && <SeguimientoPanel adminUserId={selectedUser?._id} />}
+                {activeTab === 'chat' && <ChatPanel isAdmin={isAdmin} />}
+                {activeTab === 'facturacion' && <FacturacionPanel adminUserId={selectedUser?._id} />}
+                {activeTab === 'paquetes' && <PaquetesPanel adminUserId={selectedUser?._id} />}
+                {activeTab === 'temas' && isAdmin && <TemasPanel />}
             </main>
         </div>
     )

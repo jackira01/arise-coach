@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken'
 
 export interface AuthRequest extends Request {
     userId?: string
+    userRole?: string
 }
 
 export function authMiddleware(
@@ -20,8 +21,10 @@ export function authMiddleware(
     try {
         const payload = jwt.verify(token, process.env.JWT_SECRET as string) as {
             userId: string
+            role?: string
         }
         req.userId = payload.userId
+        req.userRole = payload.role ?? 'user'
         next()
     } catch {
         res.status(401).json({ message: 'Token inválido o expirado' })

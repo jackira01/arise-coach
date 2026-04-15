@@ -25,7 +25,7 @@ router.patch(
     async (req: AuthRequest, res: Response) => {
         const { topicName } = req.params
         const { status } = req.body as {
-            status: 'pendiente' | 'en-progreso' | 'completado' | 'no-completado'
+            status: 'pendiente' | 'en-progreso' | 'completado'
         }
 
         try {

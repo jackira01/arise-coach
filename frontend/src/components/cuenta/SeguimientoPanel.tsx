@@ -1,5 +1,18 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
+import {
+    adminGetUserProfile,
+    adminGetUserSessions,
+    adminAddSession,
+    adminAddBaseHours,
+    adminUpdateUserTopicStatus,
+    adminUpsertTopicStatus,
+    type UserProfile,
+    type UserSession,
+} from '@/lib/api'
+
 // ── Plan actual (en una app real vendría del perfil del usuario) ──────────
 const CURRENT_PLAN = {
     name: 'Diamond Pack',
@@ -43,7 +56,7 @@ const TOPIC_CATEGORIES = [
             { name: 'Control emocional en partidas perdidas', status: 'en-progreso' },
             { name: 'Cómo no rendirse (mentalidad comeback)', status: 'pendiente' },
             { name: 'Manejo de la frustración', status: 'pendiente' },
-            { name: 'Confianza en tus decisiones', status: 'no-completado' },
+            { name: 'Confianza en tus decisiones', status: 'pendiente' },
             { name: 'Evitar el autosabotaje', status: 'pendiente' },
             { name: 'Cómo jugar bajo presión', status: 'pendiente' },
             { name: 'Mentalidad de mejora continua', status: 'pendiente' },
@@ -70,7 +83,7 @@ const TOPIC_CATEGORIES = [
             { name: 'Farming (CS perfecto)', status: 'pendiente' },
             { name: 'Uso correcto de habilidades', status: 'pendiente' },
             { name: 'Posicionamiento en teamfights', status: 'pendiente' },
-            { name: 'Uso de summoners', status: 'no-completado' },
+            { name: 'Uso de summoners', status: 'pendiente' },
             { name: 'Cómo kitear correctamente', status: 'pendiente' },
             { name: 'Mecánicas por rol', status: 'pendiente' },
             { name: 'Dominio del champion pool', status: 'en-progreso' },
@@ -91,142 +104,718 @@ const TOPIC_CATEGORIES = [
     },
 ]
 
-type TopicStatus = 'completado' | 'en-progreso' | 'pendiente' | 'no-completado'
+type TopicStatus = 'completado' | 'en-progreso' | 'pendiente'
 
-const STATUS_CONFIG: Record<TopicStatus, { label: string; cls: string; dot: string }> = {
-    completado: { label: 'Completado', cls: 'bg-green-500/15 text-green-400 border-green-500/30', dot: 'bg-green-400' },
-    'en-progreso': { label: 'En Progreso', cls: 'bg-blue-500/15 text-blue-400 border-blue-500/30', dot: 'bg-blue-400 animate-pulse' },
-    pendiente: { label: 'Pendiente', cls: 'bg-red-950/40 text-[rgba(255,210,210,.5)] border-red-800/25', dot: 'bg-[rgba(255,210,210,.25)]' },
-    'no-completado': { label: 'No Completado', cls: 'bg-red-500/15 text-red-400 border-red-500/30', dot: 'bg-red-400' },
+// ── Flat list of all topics for search ───────────────────────────────────
+const ALL_TOPICS_FLAT = TOPIC_CATEGORIES.flatMap((cat) =>
+    cat.topics.map((t) => ({ name: t.name, category: cat.title }))
+)
+
+// ── Compute last 4 Mon–Sun week buckets from a sessions list ─────────────
+function computeWeekBreakdown(
+    sessions: { date: string; hours: number }[],
+    hrsPerWeek: number
+) {
+    const today = new Date()
+    const dow = today.getDay() // 0=Sun
+    const offsetToMonday = dow === 0 ? -6 : 1 - dow
+    const thisMonday = new Date(today)
+    thisMonday.setDate(today.getDate() + offsetToMonday)
+    thisMonday.setHours(0, 0, 0, 0)
+
+    const fmt = (d: Date) =>
+        `${d.getDate()} ${d.toLocaleString('es', { month: 'short' })}`
+
+    return Array.from({ length: 4 }, (_, i) => {
+        const start = new Date(thisMonday)
+        start.setDate(thisMonday.getDate() - (3 - i) * 7)
+        const end = new Date(start)
+        end.setDate(start.getDate() + 6)
+        end.setHours(23, 59, 59, 999)
+
+        const done = sessions
+            .filter((s) => { const d = new Date(s.date); return d >= start && d <= end })
+            .reduce((acc, s) => acc + s.hours, 0)
+
+        return { label: `Sem ${i + 1} (${fmt(start)}–${fmt(end)})`, done, target: hrsPerWeek }
+    })
 }
 
-export default function SeguimientoPanel() {
-    return (
-        <div className="flex flex-col gap-8">
-            {/* Header */}
-            <div>
-                <div className="flex items-center gap-3 font-primary text-[.7rem] tracking-[4px] uppercase text-red-500 mb-2">
-                    <span className="w-5 h-px bg-red-500 inline-block" />
-                    Seguimiento
-                </div>
-                <h2 className="font-serif text-2xl font-bold uppercase text-[#fff0f0]">Tu Progreso</h2>
-            </div>
+const STATUS_CONFIG: Record<string, { label: string; cls: string; dot: string; selectCls: string }> = {
+    completado: { label: 'Completado', cls: 'bg-green-500/15 text-green-400 border-green-500/30', dot: 'bg-green-400', selectCls: 'bg-[#0d2414] text-green-400 border-green-500/40 focus:ring-green-500/30' },
+    'en-progreso': { label: 'En Progreso', cls: 'bg-blue-500/15 text-blue-400 border-blue-500/30', dot: 'bg-blue-400 animate-pulse', selectCls: 'bg-[#0a1a2e] text-blue-400 border-blue-500/40 focus:ring-blue-500/30' },
+    pendiente: { label: 'Pendiente', cls: 'bg-red-950/40 text-[rgba(255,210,210,.5)] border-red-800/25', dot: 'bg-[rgba(255,210,210,.25)]', selectCls: 'bg-[#1a0a0a] text-[rgba(255,210,210,.55)] border-red-800/35 focus:ring-red-500/20' },
+}
 
-            {/* Top row: progress + weekly breakdown */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                {/* Main progress card — 2 cols */}
-                <div className="lg:col-span-2 bg-red-950/30 backdrop-blur-sm border border-red-800/20 rounded-2xl p-6">
-                    <div className="flex items-start justify-between mb-1">
-                        <div>
-                            <span className="font-primary text-[.85rem] font-semibold text-[rgba(255,210,210,.8)]">Horas Completadas</span>
-                            <p className="font-primary text-[.72rem] text-[rgba(255,210,210,.4)] mt-0.5">{CURRENT_PLAN.name} · {CURRENT_PLAN.hrsPerWeek} hrs/semana</p>
-                        </div>
-                        <span className="font-primary text-[2rem] font-black leading-none bg-linear-to-br from-red-400 to-rose-500 bg-clip-text text-transparent">
-                            {PROGRESS_PCT}%
-                        </span>
+// Status cycle order for topic edit mode
+const STATUS_CYCLE: TopicStatus[] = ['pendiente', 'en-progreso', 'completado']
+
+export default function SeguimientoPanel({ adminUserId }: { adminUserId?: string }) {
+    const { data: session } = useSession()
+    const token = (session as { accessToken?: string } | null)?.accessToken ?? ''
+    const isAdmin = (session?.user as { role?: string } | undefined)?.role === 'admin'
+
+    // ── Admin state ──────────────────────────────────────────────────────
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+    const [userSessions, setUserSessions] = useState<UserSession[]>([])
+    const [loadingAdmin, setLoadingAdmin] = useState(false)
+
+    // ── Horas modals ──────────────────────────────────────────────────────
+    const [horasModal, setHorasModal] = useState<'complete' | 'add' | null>(null)
+    const [formHours, setFormHours] = useState('')
+    const [formDate, setFormDate] = useState(() => new Date().toISOString().split('T')[0])
+    const [formNotes, setFormNotes] = useState('')
+    const [submitting, setSubmitting] = useState(false)
+    const [formError, setFormError] = useState('')
+    // ── Topic search (inside Completar horas modal) ───────────────────────
+    const [topicSearch, setTopicSearch] = useState('')
+    const [topicSearchResults, setTopicSearchResults] = useState<{ name: string; category: string }[]>([])
+    const [selectedTopics, setSelectedTopics] = useState<string[]>([])
+
+    // ── Per-category topic editing ────────────────────────────────────────
+    const [editingCatTitle, setEditingCatTitle] = useState<string | null>(null)
+    // editDraft keyed by topic NAME (works for topics with or without _id)
+    const [editDraft, setEditDraft] = useState<Record<string, TopicStatus>>({})
+    const [savingEdits, setSavingEdits] = useState(false)
+    const [editError, setEditError] = useState('')
+    // openDropdown: key is topic name, value is whether dropdown is open
+    const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        if (!openDropdown) return
+        const handler = () => setOpenDropdown(null)
+        window.addEventListener('click', handler)
+        return () => window.removeEventListener('click', handler)
+    }, [openDropdown])
+
+    // ── Computed values (admin vs static) ────────────────────────────────
+    const PLAN_CONFIG: Record<string, { name: string; hrsPerWeek: number }> = {
+        silver: { name: 'Silver Pack', hrsPerWeek: 8 },
+        esmerald: { name: 'Esmerald Pack', hrsPerWeek: 12 },
+        diamond: { name: 'Diamond Pack', hrsPerWeek: 18 },
+        challenger: { name: 'Challenger Pack', hrsPerWeek: 25 },
+    }
+
+    useEffect(() => {
+        if (!adminUserId || !token) {
+            setUserProfile(null)
+            setUserSessions([])
+            return
+        }
+        setLoadingAdmin(true)
+        setEditingCatTitle(null)
+        setEditDraft({})
+        Promise.all([
+            adminGetUserProfile(token, adminUserId),
+            adminGetUserSessions(token, adminUserId),
+        ])
+            .then(([profile, sessions]) => {
+                setUserProfile(profile)
+                setUserSessions(sessions)
+            })
+            .finally(() => setLoadingAdmin(false))
+    }, [adminUserId, token])
+
+    const planCfg = adminUserId && userProfile?.plan
+        ? (PLAN_CONFIG[userProfile.plan] ?? CURRENT_PLAN)
+        : CURRENT_PLAN
+
+    const baseHours = planCfg.hrsPerWeek * 4
+    const extraHours = adminUserId ? (userProfile?.additionalHours ?? 0) : 0
+    const totalHours = baseHours + extraHours
+
+    const completedHours = adminUserId
+        ? userSessions.reduce((acc, s) => acc + s.hours, 0)
+        : COMPLETED_HOURS
+    const remainingHours = Math.max(0, totalHours - completedHours)
+    const progressPct = totalHours > 0 ? Math.min(100, Math.round((completedHours / totalHours) * 100)) : 0
+
+    const displaySessions = adminUserId
+        ? [...userSessions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        : SESSIONS.map((s) => ({ date: s.date, hours: s.hrs, topic: s.topic }))
+
+    // Group sessions by date for the history view
+    const groupedSessions: { date: string; totalHours: number; topics: string[] }[] = []
+    for (const s of displaySessions) {
+        const existing = groupedSessions.find((g) => g.date === s.date)
+        if (existing) {
+            existing.totalHours = Math.round((existing.totalHours + s.hours) * 10) / 10
+            if (!existing.topics.includes(s.topic)) existing.topics.push(s.topic)
+        } else {
+            groupedSessions.push({ date: s.date, totalHours: s.hours, topics: [s.topic] })
+        }
+    }
+
+    // ── Horas handlers ────────────────────────────────────────────────────
+    function openHorasModal(type: 'complete' | 'add') {
+        setHorasModal(type)
+        setFormHours('')
+        setFormNotes('')
+        setFormDate(new Date().toISOString().split('T')[0])
+        setFormError('')
+        setTopicSearch('')
+        setTopicSearchResults([])
+        setSelectedTopics([])
+    }
+
+    function handleTopicSearch() {
+        const normalize = (s: string) =>
+            s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+        const q = normalize(topicSearch.trim())
+        if (!q) { setTopicSearchResults([]); return }
+        setTopicSearchResults(
+            ALL_TOPICS_FLAT.filter((t) => normalize(t.name).includes(q))
+        )
+    }
+
+    function addTopic(name: string) {
+        if (!selectedTopics.includes(name)) {
+            setSelectedTopics((prev) => [...prev, name])
+        }
+        setTopicSearch('')
+        setTopicSearchResults([])
+    }
+
+    function removeTopic(name: string) {
+        setSelectedTopics((prev) => prev.filter((t) => t !== name))
+    }
+
+    async function handleCompleteHours(e: React.FormEvent) {
+        e.preventDefault()
+        const hrs = parseFloat(formHours)
+        if (!hrs || hrs <= 0) { setFormError('Ingresa las horas completadas'); return }
+        if (selectedTopics.length === 0) { setFormError('Agrega al menos un tema'); return }
+        setSubmitting(true)
+        setFormError('')
+        try {
+            let lastResult: Awaited<ReturnType<typeof adminAddSession>> | null = null
+            for (const topic of selectedTopics) {
+                lastResult = await adminAddSession(token, adminUserId!, {
+                    hours: hrs,
+                    topic,
+                    notes: formNotes.trim() || undefined,
+                    date: formDate,
+                })
+            }
+            if (lastResult) setUserSessions(lastResult.sessions)
+            setHorasModal(null)
+        } catch (err) {
+            setFormError((err as Error).message)
+        } finally {
+            setSubmitting(false)
+        }
+    }
+
+    async function handleAddBaseHours(e: React.FormEvent) {
+        e.preventDefault()
+        const hrs = parseFloat(formHours)
+        if (!hrs || hrs === 0) {
+            setFormError('Ingresa las horas a adicionar')
+            return
+        }
+        setSubmitting(true)
+        setFormError('')
+        try {
+            const result = await adminAddBaseHours(token, adminUserId!, hrs)
+            setUserProfile((prev) => prev ? { ...prev, additionalHours: result.additionalHours } : prev)
+            setHorasModal(null)
+        } catch (err) {
+            setFormError((err as Error).message)
+        } finally {
+            setSubmitting(false)
+        }
+    }
+
+    // ── Topic edit handlers ───────────────────────────────────────────────
+    function startEditCategory(cat: { title: string; topics: { _id?: string; name: string; status: string }[] }) {
+        // Init draft with ALL topics in the category, keyed by name
+        const draft: Record<string, TopicStatus> = {}
+        for (const t of cat.topics) {
+            draft[t.name] = t.status as TopicStatus
+        }
+        setEditDraft(draft)
+        setEditingCatTitle(cat.title)
+        setEditError('')
+    }
+
+    async function saveEdits(cat: { title: string; topics: { _id?: string; name: string; status: string }[] }) {
+        if (!adminUserId) return
+        setSavingEdits(true)
+        setEditError('')
+        try {
+            // Find topics whose status changed vs the current effective status
+            const changedTopics = cat.topics.filter((t) => {
+                const drafted = editDraft[t.name]
+                return drafted !== undefined && drafted !== t.status
+            })
+
+            let latestTopics: UserProfile['topics'] = userProfile?.topics ?? []
+            for (const t of changedTopics) {
+                const newStatus = editDraft[t.name]
+                if (t._id) {
+                    // Already saved in DB — update by _id
+                    const result = await adminUpdateUserTopicStatus(token, adminUserId, t._id, newStatus)
+                    latestTopics = result.topics
+                } else {
+                    // Not yet in DB — upsert by name
+                    const result = await adminUpsertTopicStatus(token, adminUserId, t.name, cat.title, newStatus)
+                    latestTopics = result.topics
+                }
+            }
+
+            setUserProfile((prev) => prev ? { ...prev, topics: latestTopics } : prev)
+            setEditingCatTitle(null)
+            setEditDraft({})
+        } catch (err) {
+            setEditError((err as Error).message)
+        } finally {
+            setSavingEdits(false)
+        }
+    }
+
+    function cancelEdits() {
+        setEditingCatTitle(null)
+        setEditDraft({})
+        setEditError('')
+    }
+
+    return (
+        <>
+            {isAdmin && !adminUserId ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                    <div className="text-center">
+                        <svg className="w-16 h-16 mx-auto mb-4 text-[rgba(255,210,210,.3)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.856-1.487M15 7a3 3 0 11-6 0 3 3 0 016 0zM6 20h12a6 6 0 00-6-6 6 6 0 00-6 6z" />
+                        </svg>
+                        <h2 className="font-serif text-2xl font-bold uppercase text-[#fff0f0] mb-2">Selecciona un usuario</h2>
+                        <p className="font-primary text-[.85rem] text-[rgba(255,210,210,.5)]">
+                            Usa el filtro "Ver como:" en la parte superior para seleccionar un usuario y ver su progreso
+                        </p>
                     </div>
-                    {/* Main bar */}
-                    <div className="h-4 bg-red-950/60 rounded-full overflow-hidden border border-red-800/20 my-4 relative">
-                        <div
-                            className="h-full bg-linear-to-r from-red-600 to-rose-500 rounded-full transition-all duration-700 flex items-center justify-end pr-2"
-                            style={{ width: `${PROGRESS_PCT}%` }}
-                        >
-                            <span className="text-[9px] font-black font-primary text-white/80 whitespace-nowrap">{COMPLETED_HOURS}h</span>
-                        </div>
+                </div>
+            ) : (
+            <div className="flex flex-col gap-8">
+                {/* Header */}
+                <div>
+                    <div className="flex items-center gap-3 font-primary text-[.7rem] tracking-[4px] uppercase text-red-500 mb-2">
+                        <span className="w-5 h-px bg-red-500 inline-block" />
+                        Seguimiento
                     </div>
-                    <div className="grid grid-cols-3 gap-3 mt-2">
-                        {[
-                            { label: 'Completadas', value: `${COMPLETED_HOURS} hrs`, cls: 'text-rose-400' },
-                            { label: 'Restantes', value: `${REMAINING_HOURS} hrs`, cls: 'text-[rgba(255,210,210,.6)]' },
-                            { label: 'Contratadas', value: `${TOTAL_HOURS} hrs`, cls: 'text-red-400' },
-                        ].map((s) => (
-                            <div key={s.label} className="bg-red-950/30 rounded-xl p-3 text-center border border-red-800/15">
-                                <p className={`font-primary text-[1.15rem] font-black leading-none mb-1 ${s.cls}`}>{s.value}</p>
-                                <p className="font-primary text-[.65rem] uppercase tracking-[1.5px] text-[rgba(255,210,210,.4)]">{s.label}</p>
+                    <h2 className="font-serif text-2xl font-bold uppercase text-[#fff0f0]">
+                        Tu Progreso
+                        {loadingAdmin && <span className="ml-3 font-primary text-[.65rem] normal-case tracking-normal text-[rgba(255,210,210,.35)] font-normal">cargando...</span>}
+                    </h2>
+                </div>
+
+                {/* Top row: progress + weekly breakdown */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                    {/* Main progress card — 2 cols */}
+                    <div className="lg:col-span-2 bg-red-950/30 backdrop-blur-sm border border-red-800/20 rounded-2xl p-6">
+                        <div className="flex items-start justify-between mb-1">
+                            <div>
+                                <span className="font-primary text-[.85rem] font-semibold text-[rgba(255,210,210,.8)]">Horas Completadas</span>
+                                <p className="font-primary text-[.72rem] text-[rgba(255,210,210,.4)] mt-0.5">{planCfg.name} · {planCfg.hrsPerWeek} hrs/semana</p>
                             </div>
+                            <div className="flex flex-col items-end gap-2">
+                                {/* Admin action buttons — only visible when admin has selected a user */}
+                                {isAdmin && adminUserId && (
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => openHorasModal('complete')}
+                                            className="flex items-center gap-1.5 font-primary text-[.6rem] font-bold uppercase tracking-[1px] px-2.5 py-1 rounded-lg bg-green-600/20 border border-green-500/30 text-green-400 hover:bg-green-600/35 transition-colors"
+                                        >
+                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                            Completar
+                                        </button>
+                                        <button
+                                            onClick={() => openHorasModal('add')}
+                                            className="flex items-center gap-1.5 font-primary text-[.6rem] font-bold uppercase tracking-[1px] px-2.5 py-1 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400 hover:bg-blue-600/35 transition-colors"
+                                        >
+                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                                            Adicionar hrs
+                                        </button>
+                                    </div>
+                                )}
+                                <span className="font-primary text-[2rem] font-black leading-none bg-linear-to-br from-red-400 to-rose-500 bg-clip-text text-transparent">
+                                    {progressPct}%
+                                </span>
+                            </div>
+                        </div>
+                        {/* Main bar */}
+                        <div className="h-4 bg-red-950/60 rounded-full overflow-hidden border border-red-800/20 my-4 relative">
+                            <div
+                                className="h-full bg-linear-to-r from-red-600 to-rose-500 rounded-full transition-all duration-700 flex items-center justify-end pr-2"
+                                style={{ width: `${progressPct}%` }}
+                            >
+                                <span className="text-[9px] font-black font-primary text-white/80 whitespace-nowrap">{completedHours}h</span>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3 mt-2">
+                            {[
+                                { label: 'Completadas', value: `${completedHours} hrs`, cls: 'text-rose-400' },
+                                { label: 'Restantes', value: `${remainingHours} hrs`, cls: 'text-[rgba(255,210,210,.6)]' },
+                                { label: 'Contratadas', value: `${totalHours} hrs`, cls: 'text-red-400' },
+                            ].map((s) => (
+                                <div key={s.label} className="bg-red-950/30 rounded-xl p-3 text-center border border-red-800/15">
+                                    <p className={`font-primary text-[1.15rem] font-black leading-none mb-1 ${s.cls}`}>{s.value}</p>
+                                    <p className="font-primary text-[.65rem] uppercase tracking-[1.5px] text-[rgba(255,210,210,.4)]">{s.label}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Weekly breakdown */}
+                    <div className="bg-red-950/30 backdrop-blur-sm border border-red-800/20 rounded-2xl p-6 flex flex-col gap-3">
+                        <span className="font-primary text-[.82rem] font-semibold text-[rgba(255,210,210,.8)]">Horas por Semana</span>
+                        {computeWeekBreakdown(
+                            adminUserId ? userSessions : SESSIONS.map((s) => ({ date: s.date, hours: s.hrs })),
+                            planCfg.hrsPerWeek
+                        ).map((w) => {
+                            const isComplete = w.done >= w.target
+                            return (
+                                <div key={w.label} className="flex items-center justify-between px-3 py-2 rounded-lg bg-red-950/40 border border-red-800/20 hover:border-red-700/30 transition-colors">
+                                    <span className="font-primary text-[.75rem] text-[rgba(255,210,210,.6)]">{w.label}</span>
+                                    <div className="flex items-center gap-3">
+                                        <span className={`font-primary text-[.78rem] font-bold ${isComplete ? 'text-green-400' : 'text-red-400'}`}>
+                                            {w.done}/{w.target}h
+                                        </span>
+                                        <span className={`w-2 h-2 rounded-full shrink-0 ${isComplete ? 'bg-green-400' : 'bg-red-400'}`} />
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </div>
+
+                {/* Sessions history */}
+                <div className="bg-red-950/20 backdrop-blur-sm border border-red-800/20 rounded-2xl overflow-hidden">
+                    <div className="px-6 py-4 border-b border-red-800/20 bg-red-950/30">
+                        <span className="font-primary text-[.82rem] font-semibold text-[rgba(255,210,210,.8)]">Historial de Sesiones</span>
+                    </div>
+                    <div className="hidden sm:grid grid-cols-[1.4fr_0.5fr_2.5fr] gap-4 px-6 py-2.5 border-b border-red-800/15 bg-red-950/20">
+                        {['Fecha', 'Horas', 'Tema'].map((h) => (
+                            <span key={h} className="font-primary text-[.65rem] uppercase tracking-[2px] text-[rgba(255,210,210,.35)]">{h}</span>
                         ))}
                     </div>
-                </div>
-
-                {/* Weekly breakdown */}
-                <div className="bg-red-950/30 backdrop-blur-sm border border-red-800/20 rounded-2xl p-6 flex flex-col gap-4">
-                    <span className="font-primary text-[.82rem] font-semibold text-[rgba(255,210,210,.8)]">Horas por Semana</span>
-                    {WEEKS.map((w) => {
-                        const pct = Math.min(100, Math.round((w.done / w.target) * 100))
-                        return (
-                            <div key={w.label}>
-                                <div className="flex items-center justify-between mb-1">
-                                    <span className="font-primary text-[.7rem] text-[rgba(255,210,210,.5)]">{w.label}</span>
-                                    <span className="font-primary text-[.72rem] font-bold text-red-400">{w.done}/{w.target}h</span>
-                                </div>
-                                <div className="h-2 bg-red-950/60 rounded-full overflow-hidden">
-                                    <div className="h-full bg-linear-to-r from-red-600 to-rose-500 rounded-full" style={{ width: `${pct}%` }} />
-                                </div>
-                            </div>
-                        )
-                    })}
-                </div>
-            </div>
-
-            {/* Sessions history */}
-            <div className="bg-red-950/20 backdrop-blur-sm border border-red-800/20 rounded-2xl overflow-hidden">
-                <div className="px-6 py-4 border-b border-red-800/20 bg-red-950/30">
-                    <span className="font-primary text-[.82rem] font-semibold text-[rgba(255,210,210,.8)]">Historial de Sesiones</span>
-                </div>
-                <div className="hidden sm:grid grid-cols-[1.4fr_0.5fr_2.5fr] gap-4 px-6 py-2.5 border-b border-red-800/15 bg-red-950/20">
-                    {['Fecha', 'Horas', 'Tema'].map((h) => (
-                        <span key={h} className="font-primary text-[.65rem] uppercase tracking-[2px] text-[rgba(255,210,210,.35)]">{h}</span>
+                    {groupedSessions.map((s, i) => (
+                        <div
+                            key={i}
+                            className={`grid grid-cols-1 sm:grid-cols-[1.4fr_0.5fr_2.5fr] gap-1 sm:gap-4 px-6 py-3.5 transition-colors hover:bg-red-950/20 ${i < groupedSessions.length - 1 ? 'border-b border-red-800/10' : ''}`}
+                        >
+                            <span className="font-primary text-[.78rem] text-[rgba(255,210,210,.5)]">{s.date}</span>
+                            <span className="font-primary text-[.82rem] font-bold text-rose-400">{s.totalHours}h</span>
+                            <span className="font-primary text-[.8rem] text-[rgba(255,210,210,.75)] truncate">{s.topics.join(', ')}</span>
+                        </div>
                     ))}
                 </div>
-                {SESSIONS.map((s, i) => (
-                    <div
-                        key={i}
-                        className={`grid grid-cols-1 sm:grid-cols-[1.4fr_0.5fr_2.5fr] gap-1 sm:gap-4 px-6 py-3.5 transition-colors hover:bg-red-950/20 ${i < SESSIONS.length - 1 ? 'border-b border-red-800/10' : ''}`}
-                    >
-                        <span className="font-primary text-[.78rem] text-[rgba(255,210,210,.5)]">{s.date}</span>
-                        <span className="font-primary text-[.82rem] font-bold text-rose-400">{s.hrs}h</span>
-                        <span className="font-primary text-[.82rem] text-[rgba(255,210,210,.75)]">{s.topic}</span>
-                    </div>
-                ))}
-            </div>
 
-            {/* Topic categories */}
-            <div>
-                <h3 className="font-primary text-[.72rem] uppercase tracking-[3px] text-[rgba(255,210,210,.4)] mb-4">Temas del Plan</h3>
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-                    {TOPIC_CATEGORIES.map((cat) => {
-                        const catCompleted = cat.topics.filter((t) => t.status === 'completado').length
-                        const catPct = Math.round((catCompleted / cat.topics.length) * 100)
+                {/* Temas */}
+                <div>
+                    <h3 className="font-primary text-[.72rem] uppercase tracking-[3px] text-[rgba(255,210,210,.4)] mb-4">Temas</h3>
+                    {(() => {
+                        // Build category list — always use TOPIC_CATEGORIES as base.
+                        // In admin mode: overlay real user statuses/_ids; unmodified topics default to 'pendiente'.
+                        // In normal (non-admin) mode: show static statuses as-is.
+                        const userTopicsMap = new Map(
+                            (userProfile?.topics ?? []).map((t) => [t.name, t])
+                        )
+                        const displayCategories: { title: string; topics: { _id?: string; name: string; status: string }[] }[] =
+                            TOPIC_CATEGORIES.map((cat) => ({
+                                title: cat.title,
+                                topics: cat.topics.map((staticTopic) => {
+                                    const userTopic = userTopicsMap.get(staticTopic.name)
+                                    return {
+                                        _id: userTopic?._id,
+                                        name: staticTopic.name,
+                                        // Admin mode: only show real saved status; unsaved topics are always 'pendiente'
+                                        // Normal mode: use static fallback status for display
+                                        status: adminUserId
+                                            ? (userTopic?.status ?? 'pendiente')
+                                            : (userTopic?.status ?? staticTopic.status),
+                                    }
+                                }),
+                            }))
+
                         return (
-                            <div key={cat.title} className="bg-red-950/30 backdrop-blur-sm border border-red-800/20 rounded-2xl p-5">
-                                <div className="flex items-center justify-between mb-2">
-                                    <h4 className="font-serif text-[.92rem] font-bold uppercase text-[#fff0f0]">{cat.title}</h4>
-                                    <span className="font-primary text-[.75rem] font-bold text-red-400">{catPct}%</span>
-                                </div>
-                                <div className="h-1.5 bg-red-950/60 rounded-full overflow-hidden mb-4">
-                                    <div className="h-full bg-linear-to-r from-red-600 to-rose-500 rounded-full" style={{ width: `${catPct}%` }} />
-                                </div>
-                                <ul className="flex flex-col gap-2">
-                                    {cat.topics.map((topic) => {
-                                        const cfg = STATUS_CONFIG[topic.status as TopicStatus]!
-                                        return (
-                                            <li key={topic.name} className="flex items-center justify-between gap-3">
-                                                <div className="flex items-center gap-2 min-w-0">
-                                                    <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
-                                                    <span className="font-primary text-[.8rem] text-[rgba(255,210,210,.75)] truncate">{topic.name}</span>
+                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                                {displayCategories.map((cat) => {
+                                    const isEditing = editingCatTitle === cat.title
+                                    // Effective topics: use draft (keyed by name) when editing
+                                    const effectiveTopics = cat.topics.map((t) => ({
+                                        ...t,
+                                        status: isEditing && editDraft[t.name] !== undefined
+                                            ? editDraft[t.name]
+                                            : t.status,
+                                    }))
+                                    const catCompleted = effectiveTopics.filter((t) => t.status === 'completado').length
+                                    const catPct = effectiveTopics.length > 0 ? Math.round((catCompleted / effectiveTopics.length) * 100) : 0
+                                    return (
+                                        <div key={cat.title} className={`bg-red-950/30 backdrop-blur-sm border rounded-2xl p-5 flex flex-col transition-colors ${isEditing ? 'border-red-500/40' : 'border-red-800/20'}`}>
+                                            {/* Category header */}
+                                            <div className="flex items-center justify-between mb-2 shrink-0">
+                                                <h4 className="font-serif text-[.92rem] font-bold uppercase text-[#fff0f0]">{cat.title}</h4>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-primary text-[.75rem] font-bold text-red-400">{catPct}%</span>
+                                                    {isAdmin && adminUserId && !isEditing && (
+                                                        <button
+                                                            onClick={() => startEditCategory(cat)}
+                                                            className="flex items-center gap-1 font-primary text-[.6rem] font-bold uppercase tracking-[1px] px-2 py-1 rounded-lg bg-red-950/50 border border-red-800/25 text-[rgba(255,210,210,.45)] hover:text-rose-400 hover:border-red-600/40 transition-colors"
+                                                        >
+                                                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                            </svg>
+                                                            Editar
+                                                        </button>
+                                                    )}
                                                 </div>
-                                                <span className={`shrink-0 font-primary text-[.6rem] font-bold uppercase tracking-[1.5px] px-2 py-0.5 rounded-full border ${cfg.cls}`}>
-                                                    {cfg.label}
-                                                </span>
-                                            </li>
-                                        )
-                                    })}
-                                </ul>
+                                            </div>
+                                            {/* Progress bar */}
+                                            <div className="h-1.5 bg-red-950/60 rounded-full overflow-hidden mb-3 shrink-0">
+                                                <div className="h-full bg-linear-to-r from-red-600 to-rose-500 rounded-full transition-all duration-500" style={{ width: `${catPct}%` }} />
+                                            </div>
+                                            {/* Topic list — scroll if >10 */}
+                                            <ul className={`flex flex-col gap-1.5 ${effectiveTopics.length > 10 ? 'max-h-64 overflow-y-auto pr-1' : ''}`}>
+                                                {effectiveTopics.map((topic) => {
+                                                    const cfg = STATUS_CONFIG[topic.status] ?? STATUS_CONFIG['pendiente']
+                                                    return (
+                                                        <li
+                                                            key={topic.name}
+                                                            className="flex items-center justify-between gap-3 rounded-xl px-2 py-1.5"
+                                                        >
+                                                            <div className="flex items-center gap-2 min-w-0">
+                                                                <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
+                                                                <span className={`font-primary text-[.8rem] truncate ${isEditing ? 'text-[rgba(255,210,210,.9)]' : 'text-[rgba(255,210,210,.75)]'}`}>
+                                                                    {topic.name}
+                                                                </span>
+                                                            </div>
+                                                            {isEditing ? (
+                                                                <div className="relative shrink-0">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === topic.name ? null : topic.name) }}
+                                                                        className={`flex items-center gap-1.5 font-primary text-[.6rem] font-bold uppercase tracking-[1px] px-2.5 py-1 rounded-lg border cursor-pointer transition-colors ${cfg.cls}`}
+                                                                    >
+                                                                        {cfg.label}
+                                                                        <svg className={`w-3 h-3 transition-transform ${openDropdown === topic.name ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+                                                                    </button>
+                                                                    {openDropdown === topic.name && (
+                                                                        <div onClick={(e) => e.stopPropagation()} className="absolute right-0 top-full mt-1 z-20 min-w-[130px] bg-[#1a0808] border border-red-800/40 rounded-xl shadow-xl overflow-hidden">
+                                                                            {(['pendiente', 'en-progreso', 'completado'] as TopicStatus[]).map((s) => {
+                                                                                const sCfg = STATUS_CONFIG[s]
+                                                                                return (
+                                                                                    <button
+                                                                                        key={s}
+                                                                                        type="button"
+                                                                                        onClick={() => {
+                                                                                            setEditDraft((prev) => ({ ...prev, [topic.name]: s }))
+                                                                                            setOpenDropdown(null)
+                                                                                        }}
+                                                                                        className={`w-full flex items-center gap-2 px-3 py-2 font-primary text-[.65rem] font-bold uppercase tracking-[1px] transition-colors hover:bg-red-900/30 text-left ${topic.status === s ? 'bg-red-900/20' : ''
+                                                                                            }`}
+                                                                                    >
+                                                                                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${sCfg.dot}`} />
+                                                                                        <span className={sCfg.cls.split(' ').find(c => c.startsWith('text-')) ?? 'text-white'}>{sCfg.label}</span>
+                                                                                    </button>
+                                                                                )
+                                                                            })}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <span className={`shrink-0 font-primary text-[.58rem] font-bold uppercase tracking-[1px] px-2 py-0.5 rounded-full border ${cfg.cls}`}>
+                                                                    {cfg.label}
+                                                                </span>
+                                                            )}
+                                                        </li>
+                                                    )
+                                                })}
+                                            </ul>
+                                            {/* Edit mode actions */}
+                                            {isEditing && (
+                                                <div className="mt-4 pt-3 border-t border-red-700/30 shrink-0 flex flex-col gap-2">
+                                                    <p className="font-primary text-[.65rem] text-[rgba(255,210,210,.4)] text-center">
+                                                        Cambia el estado de cada tema con el selector
+                                                    </p>
+                                                    {editError && <p className="font-primary text-[.7rem] text-rose-400 text-center">{editError}</p>}
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={cancelEdits}
+                                                            disabled={savingEdits}
+                                                            className="flex-1 font-primary text-[.72rem] font-bold uppercase tracking-[1.5px] py-2 rounded-xl bg-red-950/40 border border-red-800/25 text-[rgba(255,210,210,.4)] hover:text-[rgba(255,210,210,.7)] transition-colors disabled:opacity-50"
+                                                        >
+                                                            Cancelar
+                                                        </button>
+                                                        <button
+                                                            onClick={() => saveEdits(cat)}
+                                                            disabled={savingEdits}
+                                                            className="flex-1 font-primary text-[.72rem] font-bold uppercase tracking-[1.5px] py-2 rounded-xl bg-red-700/30 border border-red-500/40 text-red-300 hover:bg-red-700/50 transition-colors disabled:opacity-50"
+                                                        >
+                                                            {savingEdits ? 'Guardando…' : 'Aceptar cambios'}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )
+                                })}
                             </div>
                         )
-                    })}
+                    })()}
                 </div>
             </div>
-        </div>
+            )}
+
+            {/* ── Modal: Completar horas ──────────────────────────────── */}
+            {horasModal === 'complete' && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setHorasModal(null)}>
+                    <form
+                        onClick={(e) => e.stopPropagation()}
+                        onSubmit={handleCompleteHours}
+                        className="w-full max-w-lg bg-[#1a0a0a] border border-red-800/30 rounded-2xl p-6 flex flex-col gap-5 shadow-xl max-h-[90vh] overflow-y-auto"
+                    >
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-serif text-lg font-bold uppercase text-[#fff0f0]">Completar horas</h3>
+                            <button type="button" onClick={() => setHorasModal(null)} className="text-[rgba(255,210,210,.4)] hover:text-rose-400 leading-none text-xl">&times;</button>
+                        </div>
+                        <div className="flex flex-col gap-4">
+                            <label className="flex flex-col gap-1.5">
+                                <span className="font-primary text-[.7rem] uppercase tracking-[1.5px] text-[rgba(255,210,210,.5)]">Horas completadas</span>
+                                <input
+                                    type="number" step="0.5" min="0.5" required
+                                    value={formHours} onChange={(e) => setFormHours(e.target.value)}
+                                    placeholder="Ej: 2.5"
+                                    className="bg-red-950/30 border border-red-800/30 rounded-xl px-4 py-2.5 font-primary text-sm text-[rgba(255,210,210,.9)] placeholder:text-[rgba(255,210,210,.25)] focus:outline-none focus:border-red-500/50"
+                                />
+                            </label>
+
+                            {/* Topic search */}
+                            <div className="flex flex-col gap-1.5">
+                                <span className="font-primary text-[.7rem] uppercase tracking-[1.5px] text-[rgba(255,210,210,.5)]">Temas de la sesión</span>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={topicSearch}
+                                        onChange={(e) => setTopicSearch(e.target.value)}
+                                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleTopicSearch() } }}
+                                        placeholder="Buscar tema por nombre..."
+                                        className="flex-1 bg-red-950/30 border border-red-800/30 rounded-xl px-4 py-2.5 font-primary text-sm text-[rgba(255,210,210,.9)] placeholder:text-[rgba(255,210,210,.25)] focus:outline-none focus:border-red-500/50"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleTopicSearch}
+                                        className="shrink-0 px-3 py-2.5 rounded-xl bg-red-800/30 border border-red-700/30 text-[rgba(255,210,210,.6)] hover:text-rose-400 hover:border-red-500/40 transition-colors"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" /></svg>
+                                    </button>
+                                </div>
+
+                                {/* Search results */}
+                                {topicSearchResults.length > 0 && (
+                                    <div className="bg-[#1a0808] border border-red-800/35 rounded-xl overflow-hidden max-h-44 overflow-y-auto">
+                                        {topicSearchResults.map((t) => (
+                                            <button
+                                                key={t.name}
+                                                type="button"
+                                                onClick={() => addTopic(t.name)}
+                                                disabled={selectedTopics.includes(t.name)}
+                                                className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-left transition-colors border-b border-red-800/20 last:border-0 ${
+                                                    selectedTopics.includes(t.name)
+                                                        ? 'opacity-40 cursor-not-allowed'
+                                                        : 'hover:bg-red-900/25'
+                                                }`}
+                                            >
+                                                <div>
+                                                    <p className="font-primary text-[.78rem] text-[rgba(255,210,210,.85)]">{t.name}</p>
+                                                    <p className="font-primary text-[.65rem] text-[rgba(255,210,210,.35)]">{t.category}</p>
+                                                </div>
+                                                {!selectedTopics.includes(t.name) && (
+                                                    <svg className="w-4 h-4 text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                                {topicSearchResults.length === 0 && topicSearch.trim() && (
+                                    <p className="font-primary text-[.7rem] text-[rgba(255,210,210,.35)] text-center py-1">Sin resultados para &ldquo;{topicSearch}&rdquo;</p>
+                                )}
+
+                                {/* Selected topics */}
+                                {selectedTopics.length > 0 && (
+                                    <div className="flex flex-wrap gap-1.5 mt-1">
+                                        {selectedTopics.map((name) => (
+                                            <span
+                                                key={name}
+                                                className="flex items-center gap-1.5 font-primary text-[.68rem] px-2.5 py-1 rounded-lg bg-rose-900/30 border border-rose-700/35 text-rose-300"
+                                            >
+                                                {name}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeTopic(name)}
+                                                    className="text-rose-400/60 hover:text-rose-300 leading-none ml-0.5"
+                                                >
+                                                    &times;
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <label className="flex flex-col gap-1.5">
+                                <span className="font-primary text-[.7rem] uppercase tracking-[1.5px] text-[rgba(255,210,210,.5)]">Fecha</span>
+                                <input
+                                    type="date" required
+                                    value={formDate} onChange={(e) => setFormDate(e.target.value)}
+                                    className="bg-red-950/30 border border-red-800/30 rounded-xl px-4 py-2.5 font-primary text-sm text-[rgba(255,210,210,.9)] focus:outline-none focus:border-red-500/50"
+                                />
+                            </label>
+                        </div>
+                        {formError && <p className="font-primary text-[.75rem] text-rose-400">{formError}</p>}
+                        <button
+                            type="submit" disabled={submitting}
+                            className="w-full font-primary text-[.8rem] font-bold uppercase tracking-[2px] py-3 rounded-xl bg-green-600/25 border border-green-500/40 text-green-400 hover:bg-green-600/40 transition-colors disabled:opacity-50"
+                        >
+                            {submitting ? 'Guardando...' : 'Guardar sesión'}
+                        </button>
+                    </form>
+                </div>
+            )}
+
+            {/* ── Modal: Adicionar horas ──────────────────────────────── */}
+            {horasModal === 'add' && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setHorasModal(null)}>
+                    <form
+                        onClick={(e) => e.stopPropagation()}
+                        onSubmit={handleAddBaseHours}
+                        className="w-full max-w-sm bg-[#1a0a0a] border border-red-800/30 rounded-2xl p-6 flex flex-col gap-5 shadow-xl"
+                    >
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-serif text-lg font-bold uppercase text-[#fff0f0]">Adicionar horas</h3>
+                            <button type="button" onClick={() => setHorasModal(null)} className="text-[rgba(255,210,210,.4)] hover:text-rose-400 leading-none text-xl">&times;</button>
+                        </div>
+                        <p className="font-primary text-[.75rem] text-[rgba(255,210,210,.5)]">
+                            Horas base actuales: <span className="text-blue-400 font-bold">{totalHours} hrs</span>
+                        </p>
+                        <label className="flex flex-col gap-1.5">
+                            <span className="font-primary text-[.7rem] uppercase tracking-[1.5px] text-[rgba(255,210,210,.5)]">Horas a adicionar</span>
+                            <input
+                                type="number" step="1" required
+                                value={formHours} onChange={(e) => setFormHours(e.target.value)}
+                                placeholder="Ej: 5"
+                                className="bg-red-950/30 border border-red-800/30 rounded-xl px-4 py-2.5 font-primary text-sm text-[rgba(255,210,210,.9)] placeholder:text-[rgba(255,210,210,.25)] focus:outline-none focus:border-blue-500/50"
+                            />
+                        </label>
+                        {formError && <p className="font-primary text-[.75rem] text-rose-400">{formError}</p>}
+                        <button
+                            type="submit" disabled={submitting}
+                            className="w-full font-primary text-[.8rem] font-bold uppercase tracking-[2px] py-3 rounded-xl bg-blue-600/25 border border-blue-500/40 text-blue-400 hover:bg-blue-600/40 transition-colors disabled:opacity-50"
+                        >
+                            {submitting ? 'Guardando...' : 'Adicionar horas'}
+                        </button>
+                    </form>
+                </div>
+            )}
+        </>
     )
 }
