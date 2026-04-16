@@ -1,6 +1,4 @@
-import type { NextConfig } from 'next'
-
-const BACKEND = process.env.BACKEND_URL ?? 'http://localhost:4000'
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
     reactStrictMode: true,
@@ -37,4 +35,4 @@ const nextConfig: NextConfig = {
     },
 }
 
-export default nextConfig
+export default nextConfig;

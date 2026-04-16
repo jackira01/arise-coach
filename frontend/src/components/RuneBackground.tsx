@@ -1,47 +1,50 @@
-'use client'
+"use client";
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef } from "react";
 
 const RUNE_PATHS = [
-    'M10 2L12 8L18 8L13 12L15 18L10 14L5 18L7 12L2 8L8 8Z',
-    'M10 0L12 7L19 7L14 11L16 18L10 13L4 18L6 11L1 7L8 7Z',
-    'M5 0L10 5L15 0L15 5L20 10L15 10L15 15L10 10L5 15L5 10L0 10L5 5Z',
-    'M10 1L13 7L20 7L15 12L17 19L10 15L3 19L5 12L0 7L7 7Z',
-    'M10 2C10 2 14 6 18 6C18 10 14 14 10 18C6 14 2 10 2 6C6 6 10 2 10 2Z',
-]
-
-const RUNES = Array.from({ length: 38 }, (_, i) => ({
-    id: i,
-    top: `${(i * 17 + 3) % 100}%`,
-    left: `${(i * 23 + 7) % 100}%`,
-    size: 13 + (i % 17),
-    duration: `${5 + (i % 10)}s`,
-    delay: `${(i * 0.4) % 4}s`,
-    opacity: 0.05 + ((i % 9) * 0.009),
-    path: RUNE_PATHS[i % RUNE_PATHS.length]!,
-}))
+    "M12 2l3 7h7l-6 4 2 7-6-4-6 4 2-7-6-4h7z",
+    "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10S22 17.52 22 12 17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z",
+    "M12 2L2 19h20L12 2zm0 3l7 13H5z",
+    "M4 4l16 8-16 8V4zm2 3v10l10-5z",
+    "M8 2h8l4 4v12l-4 4H8l-4-4V6z",
+    "M2 12Q12 2 22 12Q12 22 2 12z",
+];
 
 export default function RuneBackground() {
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        for (let i = 0; i < 38; i++) {
+            const div = document.createElement("div");
+            const path = RUNE_PATHS[i % RUNE_PATHS.length];
+            div.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24"><path fill="#90b4e8" d="${path}"/></svg>`;
+            const size = Math.random() * 16 + 13;
+            div.style.cssText = `
+        position: absolute;
+        opacity: 0.07;
+        animation: runeDrift linear infinite;
+        left:${Math.random() * 100}%;
+        top:${Math.random() * 100}%;
+        width:${size}px;
+        animation-duration:${Math.random() * 9 + 5}s;
+        animation-delay:${Math.random() * 7}s;
+      `;
+            container.appendChild(div);
+        }
+
+        return () => {
+            container.innerHTML = "";
+        };
+    }, []);
+
     return (
-        <div className="fixed inset-0 z-[1] pointer-events-none overflow-hidden">
-            {RUNES.map((r) => (
-                <svg
-                    key={r.id}
-                    style={{
-                        position: 'absolute',
-                        top: r.top,
-                        left: r.left,
-                        width: r.size,
-                        height: r.size,
-                        opacity: r.opacity,
-                        animation: `runeDrift ${r.duration} ease-in-out ${r.delay} infinite alternate`,
-                    }}
-                    viewBox="0 0 20 20"
-                    fill="rgba(255,100,100,0.6)"
-                >
-                    <path d={r.path} />
-                </svg>
-            ))}
-        </div>
-    )
+        <div
+            ref={containerRef}
+            className="fixed inset-0 z-[1] pointer-events-none overflow-hidden"
+        />
+    );
 }
