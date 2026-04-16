@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import Header from '@/components/Header'
 
 function VerificarContent() {
     const router = useRouter()
@@ -108,7 +109,7 @@ function VerificarContent() {
             }
 
             // Verificado → redirigir al login
-            router.push('/login?registered=google')
+            router.push('/login')
         } catch {
             setError('Error de conexión. Intenta de nuevo.')
             setLoading(false)
@@ -130,6 +131,7 @@ function VerificarContent() {
 
     return (
         <>
+            <Header />
             <div
                 className="fixed inset-0 z-0 pointer-events-none"
                 style={{ background: 'radial-gradient(ellipse 60% 55% at 50% 40%, rgba(160,10,10,.4) 0%, transparent 65%)' }}

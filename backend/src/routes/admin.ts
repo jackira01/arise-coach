@@ -1,6 +1,7 @@
 import { Router, type Response } from 'express'
 import { authMiddleware, type AuthRequest } from '../middleware/auth.js'
 import { User } from '../models/User.js'
+import { Invoice } from '../models/Invoice.js'
 import { Topic } from '../models/Topic.js'
 import { Category } from '../models/Category.js'
 
@@ -58,9 +59,10 @@ router.get('/users/:userId/sessions', authMiddleware, async (req: AuthRequest, r
 router.get('/users/:userId/invoices', authMiddleware, async (req: AuthRequest, res: Response) => {
     if (!requireAdmin(req, res)) return
     try {
-        const user = await User.findById(req.params.userId).select('invoices').lean()
-        if (!user) { res.status(404).json({ message: 'Usuario no encontrado' }); return }
-        res.json(user.invoices ?? [])
+        const invoices = await Invoice.find({ userId: req.params.userId })
+            .sort({ createdAt: -1 })
+            .lean()
+        res.json(invoices)
     } catch {
         res.status(500).json({ message: 'Error interno del servidor' })
     }
@@ -93,6 +95,54 @@ router.post('/users/:userId/sessions', authMiddleware, async (req: AuthRequest, 
         user.sessions.push(newSession)
         await user.save()
         res.status(201).json({ sessions: user.sessions, completedHours: user.sessions.reduce((a, s) => a + s.hours, 0) })
+    } catch {
+        res.status(500).json({ message: 'Error interno del servidor' })
+    }
+})
+
+// PATCH /api/admin/users/:userId/sessions/:sessionId — editar sesión
+router.patch('/users/:userId/sessions/:sessionId', authMiddleware, async (req: AuthRequest, res: Response) => {
+    if (!requireAdmin(req, res)) return
+    try {
+        const { hours, topic, notes, date } = req.body as {
+            hours?: number
+            topic?: string
+            notes?: string
+            date?: string
+        }
+        const user = await User.findById(req.params.userId)
+        if (!user) { res.status(404).json({ message: 'Usuario no encontrado' }); return }
+
+        const s = (user.sessions as Array<{ _id: { toString(): string }; hours: number; topic: string; notes?: string; date: string }>)
+            .find((x) => x._id.toString() === req.params.sessionId)
+        if (!s) { res.status(404).json({ message: 'Sesión no encontrada' }); return }
+
+        if (hours !== undefined && hours > 0) s.hours = hours
+        if (topic?.trim()) s.topic = topic.trim()
+        if (notes !== undefined) s.notes = notes.trim() || undefined
+        if (date) s.date = date
+
+        await user.save()
+        res.json({ sessions: user.sessions, completedHours: user.sessions.reduce((a, x) => a + x.hours, 0) })
+    } catch {
+        res.status(500).json({ message: 'Error interno del servidor' })
+    }
+})
+
+// DELETE /api/admin/users/:userId/sessions/:sessionId — eliminar sesión
+router.delete('/users/:userId/sessions/:sessionId', authMiddleware, async (req: AuthRequest, res: Response) => {
+    if (!requireAdmin(req, res)) return
+    try {
+        const user = await User.findById(req.params.userId)
+        if (!user) { res.status(404).json({ message: 'Usuario no encontrado' }); return }
+
+        const idx = (user.sessions as Array<{ _id: { toString(): string } }>)
+            .findIndex((x) => x._id.toString() === req.params.sessionId)
+        if (idx === -1) { res.status(404).json({ message: 'Sesión no encontrada' }); return }
+
+        user.sessions.splice(idx, 1)
+        await user.save()
+        res.json({ sessions: user.sessions, completedHours: user.sessions.reduce((a, x) => a + x.hours, 0) })
     } catch {
         res.status(500).json({ message: 'Error interno del servidor' })
     }

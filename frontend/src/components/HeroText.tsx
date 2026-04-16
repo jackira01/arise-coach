@@ -20,7 +20,7 @@ export default function HeroText({ className }: { className?: string }) {
 
             {/* Descripción */}
             <p className="font-primary text-[.95rem] sm:text-[1.02rem] leading-[1.8] text-[rgba(255,210,210,.7)] max-w-full sm:max-w-lg mb-8 sm:mb-10">
-                Mejora tus mecánicas, visión de juego y mentalidad con planes de
+                Mejora tus mecánicas, visión de juego y mentalidad con paquetes de
                 entrenamiento personalizados. Lleva tu juego al siguiente nivel y deja
                 de estar estancado.
             </p>

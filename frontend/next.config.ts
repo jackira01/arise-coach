@@ -21,6 +21,10 @@ const nextConfig: NextConfig = {
                 source: '/api/topics',
                 destination: `${BACKEND}/api/topics`,
             },
+            {
+                source: '/api/payments/:path*',
+                destination: `${BACKEND}/api/payments/:path*`,
+            },
         ]
     },
 }

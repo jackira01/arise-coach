@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Header from '@/components/Header'
 
 type Mode = 'login' | 'register'
 
@@ -82,12 +83,9 @@ export default function LoginPage() {
                 return
             }
 
-            // Registro exitoso → volver al login con éxito
+            // Registro iniciado → redirigir a verificación de correo
             setLoading(false)
-            setMode('login')
-            setEmail(regEmail)
-            setPassword('')
-            setError('')
+            router.push(`/registro/verificar?email=${encodeURIComponent(regEmail)}&name=${encodeURIComponent(regName)}`)
         } catch {
             setError('Error de conexión.')
             setLoading(false)
@@ -100,6 +98,7 @@ export default function LoginPage() {
 
     return (
         <>
+            <Header />
             <div
                 className="fixed inset-0 z-0 pointer-events-none"
                 style={{ background: 'radial-gradient(ellipse 60% 55% at 50% 40%, rgba(160,10,10,.4) 0%, transparent 65%)' }}

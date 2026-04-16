@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { adminGetUserProfile } from '@/lib/api'
+import { adminGetUserProfile, createCheckoutSession } from '@/lib/api'
 
 const PLANS = [
     {
@@ -15,7 +15,7 @@ const PLANS = [
         detail1: '8 hrs / semana',
         detail2: '5 games',
         detail3: '6 – 8 temas',
-        stripeUrl: 'https://buy.stripe.com/dRmeVeguB3Dv1XUcLV1Nu01',
+        priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_SILVER ?? '',
         features: ['Retroalimentación personalizada', 'Coach en vivo'],
     },
     {
@@ -28,7 +28,7 @@ const PLANS = [
         detail1: '12 hrs / semana',
         detail2: '10 games',
         detail3: '8 – 10 temas',
-        stripeUrl: 'https://buy.stripe.com/bJe6oI5PX5LDeKG27h1Nu02',
+        priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ESMERALD ?? '',
         features: ['Retroalimentación personalizada', 'Coach en vivo', 'Entrenamiento personalizado', 'Análisis previo'],
     },
     {
@@ -41,7 +41,7 @@ const PLANS = [
         detail1: '18 hrs / semana',
         detail2: '15 games',
         detail3: '9 – 10 temas',
-        stripeUrl: 'https://buy.stripe.com/00w5kEa6dde5auq13d1Nu03',
+        priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_DIAMOND ?? '',
         features: ['Retroalimentación personalizada', 'Coach en vivo', 'Entrenamiento personalizado', 'Análisis previo', 'Videos personalizados de mejoras', 'Teorías aplicadas al juego'],
     },
     {
@@ -54,7 +54,7 @@ const PLANS = [
         detail1: '32 hrs / semana',
         detail2: '20 games',
         detail3: '12 – 14 temas',
-        stripeUrl: 'https://buy.stripe.com/fZucN6celgqhcCydPZ1Nu00',
+        priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_CHALLENGER ?? '',
         features: ['Retroalimentación personalizada', 'Coach en vivo', 'Entrenamiento personalizado', 'Análisis previo', 'Videos personalizados de mejoras', 'Teorías aplicadas al juego', 'Práctica guiada', 'Entendimiento analítico pre y post game'],
     },
 ]
@@ -62,9 +62,12 @@ const PLANS = [
 export default function PaquetesPanel({ adminUserId }: { adminUserId?: string }) {
     const { data: session } = useSession()
     const token = (session as { accessToken?: string } | null)?.accessToken ?? ''
+    const userId = (session?.user as { id?: string } | undefined)?.id ?? ''
+    const userEmail = session?.user?.email ?? ''
 
     const [adminUserName, setAdminUserName] = useState<string | null>(null)
     const [adminUserPlan, setAdminUserPlan] = useState<string | null>(null)
+    const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null)
 
     useEffect(() => {
         if (!adminUserId || !token) return
@@ -89,11 +92,11 @@ export default function PaquetesPanel({ adminUserId }: { adminUserId?: string })
                     <span className="w-5 h-px bg-red-500 inline-block" />
                     Paquetes
                 </div>
-                <h2 className="font-serif text-2xl font-bold uppercase text-[#fff0f0]">Planes Disponibles</h2>
+                <h2 className="font-serif text-2xl font-bold uppercase text-[#fff0f0]">Paquetes Disponibles</h2>
                 <p className="font-primary text-[.88rem] text-[rgba(255,210,210,.5)] mt-1">
                     {adminUserId && adminUserName
-                        ? `Plan activo de ${adminUserName}.`
-                        : 'Tu plan actual está resaltado. Puedes cambiar o hacer upgrade en cualquier momento.'}
+                        ? `Paquete activo de ${adminUserName}.`
+                        : 'Tu paquete actual está resaltado. Puedes cambiar o hacer upgrade en cualquier momento.'}
                 </p>
             </div>
 
@@ -106,7 +109,7 @@ export default function PaquetesPanel({ adminUserId }: { adminUserId?: string })
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 flex-wrap">
                             <span className="font-serif text-[1.1rem] font-bold uppercase text-white">{currentPlan.name}</span>
-                            <span className="font-primary text-[.6rem] font-black tracking-[3px] uppercase px-3 py-0.5 rounded-full bg-linear-to-r from-cyan-500/80 to-blue-500/80 text-white">Plan Activo</span>
+                            <span className="font-primary text-[.6rem] font-black tracking-[3px] uppercase px-3 py-0.5 rounded-full bg-linear-to-r from-cyan-500/80 to-blue-500/80 text-white">Paquete Activo</span>
                         </div>
                         <div className="flex gap-5 mt-2 flex-wrap">
                             {[currentPlan.detail1, currentPlan.detail2, currentPlan.detail3].map((d) => (
@@ -114,7 +117,7 @@ export default function PaquetesPanel({ adminUserId }: { adminUserId?: string })
                             ))}
                         </div>
                     </div>
-                    <span className="font-primary text-[1.8rem] font-black text-white shrink-0">{currentPlan.price}<span className="text-[.7rem] font-normal text-white/50 ml-1">/mes</span></span>
+                    <span className="font-primary text-[1.8rem] font-black text-white shrink-0">{currentPlan.price}</span>
                 </div>
             )}
 
@@ -134,7 +137,7 @@ export default function PaquetesPanel({ adminUserId }: { adminUserId?: string })
                         >
                             {isCurrent && (
                                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 font-primary text-[.55rem] font-black tracking-[3px] uppercase px-3 py-0.5 rounded-full bg-linear-to-r from-cyan-400 to-blue-400 text-white shadow-lg whitespace-nowrap">
-                                    {adminUserId ? 'PLAN DEL USUARIO' : 'TU PLAN ACTUAL'}
+                                    {adminUserId ? 'PAQUETE DEL USUARIO' : 'TU PAQUETE ACTUAL'}
                                 </div>
                             )}
 
@@ -150,7 +153,7 @@ export default function PaquetesPanel({ adminUserId }: { adminUserId?: string })
                                 {plan.name}
                             </h3>
                             <p className={`font-primary text-[1.5rem] font-black text-center leading-none mb-4 ${isCurrent ? 'text-white' : 'text-[#fff0f0]'}`}>
-                                {plan.price}<span className={`text-[.65rem] font-normal ml-1 ${isCurrent ? 'text-white/50' : 'text-[rgba(255,210,210,.4)]'}`}>/mes</span>
+                                {plan.price}
                             </p>
 
                             {/* Details row */}
@@ -181,18 +184,27 @@ export default function PaquetesPanel({ adminUserId }: { adminUserId?: string })
                             {/* CTA */}
                             {isCurrent ? (
                                 <div className="w-full py-2.5 bg-white/15 text-white font-primary text-[.75rem] font-bold tracking-[2px] uppercase rounded-xl text-center border border-white/20">
-                                    ✓ {adminUserId ? 'Plan del Usuario' : 'Plan Activo'}
+                                    ✓ {adminUserId ? 'Paquete del Usuario' : 'Paquete Activo'}
                                 </div>
                             ) : (
                                 !adminUserId && (
-                                    <a
-                                        href={plan.stripeUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="w-full py-2.5 bg-linear-to-br from-red-700 to-red-500 text-white font-primary text-[.75rem] font-bold tracking-[2px] uppercase rounded-xl text-center block hover:brightness-110 transition-all duration-200"
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                setLoadingPriceId(plan.priceId)
+                                                const url = await createCheckoutSession(token, userId, userEmail, plan.priceId)
+                                                window.location.href = url
+                                            } catch (err) {
+                                                console.error('[Stripe] Error al iniciar el pago:', err)
+                                            } finally {
+                                                setLoadingPriceId(null)
+                                            }
+                                        }}
+                                        disabled={loadingPriceId !== null}
+                                        className="w-full py-2.5 bg-linear-to-br from-red-700 to-red-500 text-white font-primary text-[.75rem] font-bold tracking-[2px] uppercase rounded-xl text-center hover:brightness-110 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
                                     >
-                                        Cambiar Plan
-                                    </a>
+                                        {loadingPriceId === plan.priceId ? 'Redirigiendo...' : 'Cambiar Paquete'}
+                                    </button>
                                 )
                             )}
                         </div>

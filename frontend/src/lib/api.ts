@@ -221,6 +221,46 @@ export async function adminAddBaseHours(
     return response.json()
 }
 
+/**
+ * Admin: editar una sesión existente
+ */
+export async function adminUpdateSession(
+    token: string,
+    userId: string,
+    sessionId: string,
+    payload: { hours?: number; topic?: string; notes?: string; date?: string }
+): Promise<{ sessions: UserSession[]; completedHours: number }> {
+    const response = await fetch(`${API_BASE}/admin/users/${userId}/sessions/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+    })
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({})) as { message?: string }
+        throw new Error(err.message ?? `Error ${response.status}`)
+    }
+    return response.json()
+}
+
+/**
+ * Admin: eliminar una sesión
+ */
+export async function adminDeleteSession(
+    token: string,
+    userId: string,
+    sessionId: string
+): Promise<{ sessions: UserSession[]; completedHours: number }> {
+    const response = await fetch(`${API_BASE}/admin/users/${userId}/sessions/${sessionId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({})) as { message?: string }
+        throw new Error(err.message ?? `Error ${response.status}`)
+    }
+    return response.json()
+}
+
 // ── Topics catalog ────────────────────────────────────────────────────────────
 
 export interface CatalogTopic {
@@ -370,3 +410,77 @@ export async function adminAddTopicToUser(
     }
     return response.json()
 }
+
+// ── Chat ──────────────────────────────────────────────────────────────────────
+export interface ChatMessage {
+    _id: string
+    roomUserId: string
+    senderRole: 'user' | 'admin'
+    text: string
+    createdAt: string
+}
+
+export interface ChatHistoryPage {
+    messages: ChatMessage[]
+    page: number
+    hasNextPage: boolean
+    nextPage: number | null
+}
+
+export async function fetchChatHistory(
+    token: string,
+    userId: string,
+    page: number
+): Promise<ChatHistoryPage> {
+    const response = await fetch(`${API_BASE}/chat/${userId}/messages?page=${page}`, {
+        headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({})) as { message?: string }
+        throw new Error(err.message ?? `Error ${response.status}`)
+    }
+    return response.json()
+}
+
+export async function createCheckoutSession(
+    token: string,
+    userId: string,
+    email: string,
+    priceId: string
+): Promise<string> {
+    const response = await fetch(`${API_BASE}/payments/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId, email, priceId }),
+    })
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({})) as { error?: string }
+        throw new Error(err.error ?? `Error ${response.status}`)
+    }
+    const data = await response.json() as { url: string }
+    return data.url
+}
+
+export interface InvoiceRecord {
+    _id: string
+    stripeSessionId: string
+    plan: string
+    planLabel: string
+    description: string
+    amount: number
+    currency: string
+    status: 'Pagado' | 'Pendiente' | 'Procesando'
+    createdAt: string
+}
+
+export async function getUserInvoices(token: string): Promise<InvoiceRecord[]> {
+    const response = await fetch(`${API_BASE}/payments/invoices`, {
+        headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!response.ok) throw new Error(`Error ${response.status}`)
+    return response.json()
+}
+

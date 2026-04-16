@@ -14,6 +14,7 @@ export interface IInvoice {
     date: string
     description: string
     amount: number
+    currency: string
     status: 'Pagado' | 'Pendiente' | 'Procesando'
 }
 
@@ -27,6 +28,8 @@ export interface IUser extends Document {
     verificationCodeExpires?: Date | null
     role: 'user' | 'admin'
     plan: 'silver' | 'esmerald' | 'diamond' | 'challenger' | null
+    hasPlan: boolean
+    planActive: boolean
     additionalHours: number
     sessions: IUserSession[]
     topics: {
@@ -62,6 +65,7 @@ const InvoiceSchema = new Schema({
     date: { type: String, required: true },
     description: { type: String, required: true },
     amount: { type: Number, required: true },
+    currency: { type: String, default: 'USD' },
     status: {
         type: String,
         enum: ['Pagado', 'Pendiente', 'Procesando'],
@@ -98,6 +102,8 @@ const UserSchema = new Schema<IUser>(
             enum: ['silver', 'esmerald', 'diamond', 'challenger', null],
             default: null,
         },
+        hasPlan: { type: Boolean, default: false },
+        planActive: { type: Boolean, default: false },
         topics: { type: [TopicSchema], default: [] },
         additionalHours: { type: Number, default: 0 },
         sessions: { type: [SessionSchema], default: [] },

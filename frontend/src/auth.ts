@@ -98,7 +98,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         },
         async session({ session, token }) {
             if (token) {
-                (session.user as { plan?: unknown }).plan = token.plan
+                if (token.sub) session.user.id = token.sub
+                    ; (session.user as { plan?: unknown }).plan = token.plan
                     ; (session.user as { role?: unknown }).role = token.role
                     ; (session as { accessToken?: unknown }).accessToken = token.accessToken
             }

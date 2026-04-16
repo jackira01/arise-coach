@@ -64,7 +64,7 @@ router.post('/login', async (req: Request, res: Response) => {
     }
 })
 
-// POST /api/auth/register  (email/password)
+// POST /api/auth/register  (email/password) — crea usuario pendiente y envía código de verificación
 router.post('/register', async (req: Request, res: Response) => {
     const { name, email, password } = req.body as {
         name: string
@@ -78,31 +78,59 @@ router.post('/register', async (req: Request, res: Response) => {
     }
 
     try {
-        const existing = await User.findOne({ email })
+        // Rechazar si ya existe un usuario verificado con ese email
+        const existing = await User.findOne({ email, emailVerified: true })
         if (existing) {
             res.status(409).json({ message: 'El email ya está registrado' })
             return
         }
 
-        const user = await User.create({ name, email, password, provider: 'credentials', emailVerified: true })
+        const code = generateCode()
+        const expires = new Date(Date.now() + 10 * 60 * 1000) // 10 minutos
 
-        const token = jwt.sign(
-            { userId: user._id, role: user.role },
-            process.env.JWT_SECRET as string,
-            { expiresIn: process.env.JWT_EXPIRES_IN ?? '7d' } as jwt.SignOptions
-        )
+        // Crear o actualizar usuario pendiente de verificación
+        const pending = await User.findOne({ email })
+        if (pending) {
+            pending.name = name
+            pending.password = password
+            pending.provider = 'credentials'
+            pending.verificationCode = code
+            pending.verificationCodeExpires = expires
+            await pending.save()
+        } else {
+            await User.create({
+                name,
+                email,
+                password,
+                provider: 'credentials',
+                emailVerified: false,
+                verificationCode: code,
+                verificationCodeExpires: expires,
+            })
+        }
 
-        res.status(201).json({
-            token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                plan: user.plan,
-                role: user.role,
-            },
+        const mailjet = getMailjet()
+        await mailjet.post('send', { version: 'v3.1' }).request({
+            Messages: [
+                {
+                    From: { Email: process.env.MJ_SENDER_EMAIL as string, Name: 'Arise Coach' },
+                    To: [{ Email: email }],
+                    Subject: 'Código de verificación - Arise Coach',
+                    HTMLPart: `
+                        <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;background:#0a0a0a;color:#fff0f0;border-radius:16px;">
+                            <h2 style="color:#ef4444;margin-bottom:8px;">Verifica tu correo</h2>
+                            <p style="color:rgba(255,210,210,.7);margin-bottom:24px;">Usa el siguiente código para completar tu registro en Arise Coach. Expira en 10 minutos.</p>
+                            <div style="font-size:2.5rem;font-weight:bold;letter-spacing:10px;text-align:center;color:#fff;background:#1a0a0a;border:1px solid #7f1d1d;border-radius:12px;padding:20px;">${code}</div>
+                            <p style="color:rgba(255,210,210,.4);font-size:.8rem;margin-top:24px;">Si no solicitaste esto, ignora este correo.</p>
+                        </div>
+                    `,
+                },
+            ],
         })
-    } catch {
+
+        res.json({ message: 'Código enviado' })
+    } catch (err) {
+        console.error('Error en registro:', err)
         res.status(500).json({ message: 'Error interno del servidor' })
     }
 })
