@@ -39,7 +39,7 @@ router.patch(
             if (topic) {
                 topic.status = status
             } else {
-                user.topics.push({ name: topicName, status })
+                user.topics.push({ name: topicName as string, status })
             }
 
             await user.save()

@@ -113,7 +113,7 @@ router.patch('/users/:userId/sessions/:sessionId', authMiddleware, async (req: A
         const user = await User.findById(req.params.userId)
         if (!user) { res.status(404).json({ message: 'Usuario no encontrado' }); return }
 
-        const s = (user.sessions as Array<{ _id: { toString(): string }; hours: number; topic: string; notes?: string; date: string }>)
+        const s = (user.sessions as unknown as Array<{ _id: { toString(): string }; hours: number; topic: string; notes?: string; date: string }>)
             .find((x) => x._id.toString() === req.params.sessionId)
         if (!s) { res.status(404).json({ message: 'Sesión no encontrada' }); return }
 
@@ -136,7 +136,7 @@ router.delete('/users/:userId/sessions/:sessionId', authMiddleware, async (req: 
         const user = await User.findById(req.params.userId)
         if (!user) { res.status(404).json({ message: 'Usuario no encontrado' }); return }
 
-        const idx = (user.sessions as Array<{ _id: { toString(): string } }>)
+        const idx = (user.sessions as unknown as Array<{ _id: { toString(): string } }>)
             .findIndex((x) => x._id.toString() === req.params.sessionId)
         if (idx === -1) { res.status(404).json({ message: 'Sesión no encontrada' }); return }
 
@@ -208,7 +208,7 @@ router.patch('/users/:userId/topics/:topicName', authMiddleware, async (req: Aut
         if (topic) {
             topic.status = status
         } else {
-            user.topics.push({ name: req.params.topicName, status })
+            user.topics.push({ name: req.params.topicName as string, status })
         }
         await user.save()
         res.json({ topics: user.topics })
@@ -254,7 +254,7 @@ router.patch('/users/:userId/topic-status/:topicId', authMiddleware, async (req:
         const user = await User.findById(req.params.userId)
         if (!user) { res.status(404).json({ message: 'Usuario no encontrado' }); return }
 
-        const topic = user.topics.id(req.params.topicId)
+        const topic = user.topics.find((t: any) => t._id?.toString() === req.params.topicId)
         if (!topic) { res.status(404).json({ message: 'Tema no encontrado' }); return }
 
         topic.status = status as 'pendiente' | 'en-progreso' | 'completado'
