@@ -1,34 +1,22 @@
 {
-    "name": "arise-coach-backend",
-    "version": "1.0.0",
-    "private": true,
-    "scripts": {
-        "dev": "tsx watch src/index.ts",
-        "build": "tsc",
-        "start": "node dist/index.js",
-        "seed": "tsx src/seed.ts",
-        "seed:catalog": "tsx src/seedCatalog.ts",
-        "seed:topics": "tsx src/scripts/seedTopics.ts",
-        "seed:testuser": "tsx src/scripts/seedTestUser.ts"
-    },
-    "dependencies": {
-        "bcryptjs": "^2.4.3",
-        "cors": "^2.8.5",
-        "dotenv": "^16.4.5",
-        "express": "^4.21.2",
-        "jsonwebtoken": "^9.0.2",
-        "mongoose": "^8.13.2",
-        "node-mailjet": "^6.0.11",
-        "socket.io": "^4.8.3",
-        "stripe": "^22.0.1"
-    },
-    "devDependencies": {
-        "@types/bcryptjs": "^2.4.6",
-        "@types/cors": "^2.8.17",
-        "@types/express": "^5.0.1",
-        "@types/jsonwebtoken": "^9.0.9",
-        "@types/node": "^22.15.3",
-        "tsx": "^4.19.3",
-        "typescript": "^5.8.3"
-    }
+  "name": "coach-website-backend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "mongoose": "^8.13.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.14.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3"
+  }
 }

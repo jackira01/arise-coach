@@ -1,32 +1,6 @@
-import type { NextConfig } from 'next'
+import type { NextConfig } from "next";
 
-const BACKEND = process.env.BACKEND_URL ?? 'http://localhost:4000'
+const nextConfig: NextConfig = {};
 
-const nextConfig: NextConfig = {
-    reactStrictMode: true,
-    experimental: {
-        optimizePackageImports: ['lenis'],
-    },
-    async rewrites() {
-        return [
-            {
-                source: '/api/admin/:path*',
-                destination: `${BACKEND}/api/admin/:path*`,
-            },
-            {
-                source: '/api/topics/:path*',
-                destination: `${BACKEND}/api/topics/:path*`,
-            },
-            {
-                source: '/api/topics',
-                destination: `${BACKEND}/api/topics`,
-            },
-            {
-                source: '/api/payments/:path*',
-                destination: `${BACKEND}/api/payments/:path*`,
-            },
-        ]
-    },
-}
 
-export default nextConfig
+export default nextConfig;

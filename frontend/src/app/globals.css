@@ -2,28 +2,23 @@
 
 /* ── FUENTES PERSONALIZADAS ── */
 @theme {
-  --font-primary: 'Atkinson Hyperlegible', sans-serif;
-  --font-serif: 'Domine', serif;
-  --font-code: 'Google Sans Code', monospace;
-  --font-cjk: 'Noto Serif SC', serif;
+  --font-rajdhani: 'Rajdhani', sans-serif;
+  --font-barlow: 'Barlow', sans-serif;
+  --font-barlow-condensed: 'Barlow Condensed', sans-serif;
+  --font-primary: var(--font-primary-face), sans-serif;
+  --font-secondary: var(--font-secondary-face), cursive;
 }
 
 /* ── BASE ── */
 @layer base {
-  html {
+  html, body {
     width: 100%;
+    height: 100%;
     overflow-x: hidden;
-  }
-  body {
-    width: 100%;
-    min-height: 100vh;
-    overflow-x: hidden;
-    background-color: #080102;
-    color: #fff0f0;
   }
 }
 
-/* ── KEYFRAMES ── */
+/* ── KEYFRAMES (usados por clases arbitrarias de Tailwind y JS) ── */
 @keyframes textReveal {
   from { opacity: 0; transform: translateX(-32px); }
   to   { opacity: 1; transform: translateX(0); }
@@ -40,30 +35,3 @@
   100% { transform: translateY(-35px) rotate(18deg); opacity: .05; }
 }
 
-@keyframes floatY {
-  0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-18px); }
-}
-
-/* ── SCROLLBARS ── */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(160, 15, 15, 0.45) transparent;
-}
-*::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-*::-webkit-scrollbar-track {
-  background: transparent;
-}
-*::-webkit-scrollbar-thumb {
-  background: rgba(160, 15, 15, 0.4);
-  border-radius: 100px;
-}
-*::-webkit-scrollbar-thumb:hover {
-  background: rgba(210, 30, 30, 0.65);
-}
-*::-webkit-scrollbar-corner {
-  background: transparent;
-}
