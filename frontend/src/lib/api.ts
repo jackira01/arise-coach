@@ -95,6 +95,30 @@ export async function adminGetUserProfile(
 }
 
 /**
+ * Get current user profile
+ */
+export async function getUserProfile(token: string): Promise<UserProfile & { hasPlan?: boolean, planActive?: boolean, invoices?: any[] }> {
+    try {
+        const response = await fetch(`${API_BASE}/users/me`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        })
+
+        if (!response.ok) {
+            throw new Error(`Failed to get current user profile: ${response.statusText}`)
+        }
+
+        return await response.json()
+    } catch (error) {
+        console.error('Error getting current user profile:', error)
+        throw error
+    }
+}
+
+/**
  * Get user sessions
  */
 export async function adminGetUserSessions(

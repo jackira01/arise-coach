@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { adminGetUserProfile, createCheckoutSession } from '@/lib/api'
+import { adminGetUserProfile, getUserProfile, createCheckoutSession } from '@/lib/api'
 
 const PLANS = [
     {
@@ -70,18 +70,24 @@ export default function PaquetesPanel({ adminUserId }: { adminUserId?: string })
     const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null)
 
     useEffect(() => {
-        if (!adminUserId || !token) return
-        adminGetUserProfile(token, adminUserId).then((p) => {
-            setAdminUserName(p.name)
-            setAdminUserPlan(p.plan ?? null)
-        })
+        if (!token) return
+
+        if (adminUserId) {
+            adminGetUserProfile(token, adminUserId).then((p) => {
+                setAdminUserName(p.name)
+                setAdminUserPlan(p.plan ?? null)
+            })
+        } else {
+            getUserProfile(token).then((p) => {
+                setAdminUserName(p.name)
+                setAdminUserPlan(p.plan ?? null)
+            })
+        }
     }, [adminUserId, token])
 
-    // When admin is viewing, the "current" plan is determined by the target user's plan
+    // The user's active plan
     const currentPlan = PLANS.find((p) =>
-        adminUserId
-            ? p.name.toLowerCase().startsWith(adminUserPlan ?? '__none__')
-            : p.current
+        adminUserPlan ? p.name.toLowerCase().startsWith(adminUserPlan.toLowerCase()) : false
     )
 
     return (
@@ -95,8 +101,10 @@ export default function PaquetesPanel({ adminUserId }: { adminUserId?: string })
                 <h2 className="font-serif text-2xl font-bold uppercase text-[#fff0f0]">Paquetes Disponibles</h2>
                 <p className="font-primary text-[.88rem] text-[rgba(255,210,210,.5)] mt-1">
                     {adminUserId && adminUserName
-                        ? `Paquete activo de ${adminUserName}.`
-                        : 'Tu paquete actual está resaltado. Puedes cambiar o hacer upgrade en cualquier momento.'}
+                        ? `Paquetes disponibles para ${adminUserName}.`
+                        : !adminUserPlan
+                            ? 'No has comprado ningún paquete. Empieza eligiendo uno de los siguientes.'
+                            : 'Tu paquete actual está resaltado. Puedes cambiar o hacer upgrade en cualquier momento.'}
                 </p>
             </div>
 
@@ -124,9 +132,7 @@ export default function PaquetesPanel({ adminUserId }: { adminUserId?: string })
             {/* Plan cards grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
                 {PLANS.map((plan) => {
-                    const isCurrent = adminUserId
-                        ? plan.name.toLowerCase().startsWith(adminUserPlan ?? '__none__')
-                        : plan.current
+                    const isCurrent = adminUserPlan ? plan.name.toLowerCase().startsWith(adminUserPlan.toLowerCase()) : false
                     return (
                         <div
                             key={plan.name}

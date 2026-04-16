@@ -50,11 +50,11 @@ const TEST_SESSIONS = [
 ]
 
 const TEST_INVOICES = [
-    { invoiceId: 'INV-001', date: '01 Ene 2026', description: 'Silver Pack — Enero 2026', amount: 200, status: 'Pagado' as const },
-    { invoiceId: 'INV-002', date: '01 Feb 2026', description: 'Esmerald Pack — Febrero 2026', amount: 300, status: 'Pagado' as const },
-    { invoiceId: 'INV-003', date: '01 Mar 2026', description: 'Diamond Pack — Marzo 2026', amount: 500, status: 'Pagado' as const },
-    { invoiceId: 'INV-004', date: '01 Abr 2026', description: 'Diamond Pack — Abril 2026', amount: 500, status: 'Pagado' as const },
-    { invoiceId: 'INV-005', date: '01 May 2026', description: 'Diamond Pack — Mayo 2026', amount: 500, status: 'Pendiente' as const },
+    { invoiceId: 'INV-001', date: '01 Ene 2026', description: 'Silver Pack — Enero 2026', amount: 200, currency: 'USD', status: 'Pagado' as const },
+    { invoiceId: 'INV-002', date: '01 Feb 2026', description: 'Esmerald Pack — Febrero 2026', amount: 300, currency: 'USD', status: 'Pagado' as const },
+    { invoiceId: 'INV-003', date: '01 Mar 2026', description: 'Diamond Pack — Marzo 2026', amount: 500, currency: 'USD', status: 'Pagado' as const },
+    { invoiceId: 'INV-004', date: '01 Abr 2026', description: 'Diamond Pack — Abril 2026', amount: 500, currency: 'USD', status: 'Pagado' as const },
+    { invoiceId: 'INV-005', date: '01 May 2026', description: 'Diamond Pack — Mayo 2026', amount: 500, currency: 'USD', status: 'Pendiente' as const },
 ]
 
 async function seedTestUser() {
