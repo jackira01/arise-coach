@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import SeguimientoPanel from '@/components/cuenta/SeguimientoPanel'
@@ -10,7 +10,7 @@ import PaquetesPanel from '@/components/cuenta/PaquetesPanel'
 import TemasPanel from '@/components/cuenta/TemasPanel'
 import UserSearchFilter from '@/components/cuenta/UserSearchFilter'
 import { signOut } from 'next-auth/react'
-import type { AdminUserSummary } from '@/lib/api'
+import { getUserProfile, type AdminUserSummary } from '@/lib/api'
 
 type Tab = 'seguimiento' | 'chat' | 'facturacion' | 'paquetes' | 'temas'
 
@@ -35,10 +35,41 @@ export default function CuentaClient() {
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [selectedUser, setSelectedUser] = useState<AdminUserSummary | null>(null)
 
+    const [hasPlanStatus, setHasPlanStatus] = useState<boolean>(true)
+    const [hasInvoices, setHasInvoices] = useState<boolean>(true)
+    const [loadingProfile, setLoadingProfile] = useState<boolean>(true)
+
+    useEffect(() => {
+        if (!session?.user) {
+            setLoadingProfile(false)
+            return
+        }
+        if (isAdmin) {
+            setLoadingProfile(false)
+            return
+        }
+
+        const token = (session as { accessToken?: string } | null)?.accessToken ?? ''
+        getUserProfile(token)
+            .then(profile => {
+                setHasPlanStatus(!!profile.planActive || !!profile.hasPlan || !!profile.plan)
+                setHasInvoices(Array.isArray(profile.invoices) && profile.invoices.length > 0)
+            })
+            .catch(err => {
+                console.error(err)
+            })
+            .finally(() => {
+                setLoadingProfile(false)
+            })
+    }, [session, isAdmin])
+
     function handleTabClick(id: Tab) {
         setActiveTab(id)
         setSidebarOpen(false)
     }
+
+    const needsCTA = !isAdmin && !hasPlanStatus && !hasInvoices && !loadingProfile
+    const isLockedTab = needsCTA && (activeTab === 'seguimiento' || activeTab === 'chat' || activeTab === 'temas')
 
     return (
         <div className="min-h-screen bg-[#080102] text-[#fff0f0]">
@@ -147,11 +178,29 @@ export default function CuentaClient() {
 
             {/* ── Main content — full width ──────────────────────────── */}
             <main className="relative z-10 max-w-7xl mx-auto px-5 sm:px-10 py-8">
-                {activeTab === 'seguimiento' && <SeguimientoPanel adminUserId={selectedUser?._id} />}
-                {activeTab === 'chat' && <ChatPanel isAdmin={isAdmin} />}
-                {activeTab === 'facturacion' && <FacturacionPanel adminUserId={selectedUser?._id} />}
-                {activeTab === 'paquetes' && <PaquetesPanel adminUserId={selectedUser?._id} />}
-                {activeTab === 'temas' && isAdmin && <TemasPanel />}
+                {isLockedTab ? (
+                    <div className="flex flex-col items-center justify-center min-h-[50vh] text-center my-12 bg-red-950/20 backdrop-blur-sm border border-red-800/30 rounded-2xl p-10 mx-auto max-w-2xl shadow-[0_0_30px_rgba(180,20,20,.1)]">
+                        <span className="text-5xl mb-6 grayscale text-red-500/80">🔒</span>
+                        <h2 className="font-serif text-3xl font-bold uppercase text-[#fff0f0] mb-3">Desbloquea tu potencial</h2>
+                        <p className="font-primary text-[.95rem] text-[rgba(255,210,210,.6)] mb-8 max-w-md">
+                            Adquiere uno de nuestros paquetes de entrenamiento y obtén acceso total al seguimiento de tus métricas, historiales y chat directo con el coach.
+                        </p>
+                        <button
+                            onClick={() => setActiveTab('paquetes')}
+                            className="bg-linear-to-r from-red-600 to-red-800 text-white font-primary font-bold tracking-[2px] uppercase text-[.85rem] px-8 py-3.5 rounded-full hover:shadow-[0_0_20px_rgba(220,38,38,.4)] transition-all duration-300 border border-red-500/30"
+                        >
+                            Ver paquetes disponibles
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        {activeTab === 'seguimiento' && <SeguimientoPanel adminUserId={selectedUser?._id} />}
+                        {activeTab === 'chat' && <ChatPanel isAdmin={isAdmin} />}
+                        {activeTab === 'facturacion' && <FacturacionPanel adminUserId={selectedUser?._id} />}
+                        {activeTab === 'paquetes' && <PaquetesPanel adminUserId={selectedUser?._id} />}
+                        {activeTab === 'temas' && isAdmin && <TemasPanel />}
+                    </>
+                )}
             </main>
         </div>
     )

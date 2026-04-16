@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 import Link from 'next/link'
 import Header from '@/components/Header'
 
@@ -10,6 +11,7 @@ function VerificarContent() {
     const params = useSearchParams()
     const email = params.get('email') ?? ''
     const name = params.get('name') ?? ''
+    const pwd = params.get('pwd') ?? ''
 
     const [code, setCode] = useState(['', '', '', '', '', ''])
     const [error, setError] = useState('')
@@ -108,7 +110,14 @@ function VerificarContent() {
                 return
             }
 
-            // Verificado → redirigir al login
+            // Verificado → iniciar sesión automáticamente y redirigir a cuenta
+            if (pwd) {
+                const signInRes = await signIn('credentials', { email, password: pwd, redirect: false })
+                if (!signInRes?.error) {
+                    router.push('/cuenta')
+                    return
+                }
+            }
             router.push('/login')
         } catch {
             setError('Error de conexión. Intenta de nuevo.')

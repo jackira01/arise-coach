@@ -11,16 +11,17 @@ COPY src ./src
 RUN bun run build
 
 # Production stage
-FROM node:22-alpine AS runner
+FROM oven/bun:1-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./
+COPY --from=builder /app/bun.lock* ./
 
-RUN npm install --omit=dev --ignore-scripts
+RUN bun install --production --frozen-lockfile
 
 EXPOSE 4000
 
-CMD ["node", "dist/index.js"]
+CMD ["bun", "run", "dist/index.js"]

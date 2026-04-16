@@ -14,6 +14,14 @@ const nextConfig: NextConfig = {
                 destination: `${BACKEND}/api/admin/:path*`,
             },
             {
+                source: '/api/users/:path*',
+                destination: `${BACKEND}/api/users/:path*`,
+            },
+            {
+                source: '/api/chat/:path*',
+                destination: `${BACKEND}/api/chat/:path*`,
+            },
+            {
                 source: '/api/topics/:path*',
                 destination: `${BACKEND}/api/topics/:path*`,
             },

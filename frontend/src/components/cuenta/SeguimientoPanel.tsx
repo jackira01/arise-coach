@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import {
     adminGetUserProfile,
     adminGetUserSessions,
+    getUserProfile,
     adminAddSession,
     adminAddBaseHours,
     adminUpdateUserTopicStatus,
@@ -15,47 +16,20 @@ import {
     type UserSession,
 } from '@/lib/api'
 
-// ── Plan actual (en una app real vendría del perfil del usuario) ──────────
+// ── Plan base por defecto (en una app real vendría del perfil del usuario) ──────────
 const CURRENT_PLAN = {
-    name: 'Diamond Pack',
-    hrsPerWeek: 18,
+    name: 'Sin paquete activo',
+    hrsPerWeek: 0,
     weeks: 4, // periodo de facturación (1 mes)
 }
-const TOTAL_HOURS = CURRENT_PLAN.hrsPerWeek * CURRENT_PLAN.weeks // 72
-
-const SESSIONS: { date: string; hrs: number; topic: string }[] = [
-    { date: '12 Abr 2026', hrs: 2.5, topic: 'Posicionamiento en teamfights' },
-    { date: '10 Abr 2026', hrs: 2.0, topic: 'Control emocional en partidas perdidas' },
-    { date: '08 Abr 2026', hrs: 3.0, topic: 'Rotaciones eficientes' },
-    { date: '05 Abr 2026', hrs: 2.5, topic: 'Cuándo hacer objetivos' },
-    { date: '03 Abr 2026', hrs: 2.0, topic: 'Mentalidad para rankeds' },
-    { date: '01 Abr 2026', hrs: 3.0, topic: 'Cómo dejar el tilt' },
-    { date: '29 Mar 2026', hrs: 2.5, topic: 'Control de visión (wards)' },
-    { date: '27 Mar 2026', hrs: 2.0, topic: 'Prioridad de líneas' },
-    { date: '25 Mar 2026', hrs: 2.5, topic: 'Trading en línea' },
-    { date: '22 Mar 2026', hrs: 3.0, topic: 'Dominio del champion pool' },
-    { date: '20 Mar 2026', hrs: 2.5, topic: 'Macro Game — Introducción' },
-    { date: '18 Mar 2026', hrs: 2.0, topic: 'Mentalidad y Control Emocional — Introducción' },
-]
-
-const COMPLETED_HOURS = SESSIONS.reduce((acc, s) => acc + s.hrs, 0)
-const REMAINING_HOURS = Math.max(0, TOTAL_HOURS - COMPLETED_HOURS)
-const PROGRESS_PCT = Math.min(100, Math.round((COMPLETED_HOURS / TOTAL_HOURS) * 100))
-
-const WEEKS = [
-    { label: 'Sem 1 (18–24 Mar)', done: 7.5, target: CURRENT_PLAN.hrsPerWeek },
-    { label: 'Sem 2 (25–31 Mar)', done: 9.5, target: CURRENT_PLAN.hrsPerWeek },
-    { label: 'Sem 3 (1–7 Abr)', done: 7.5, target: CURRENT_PLAN.hrsPerWeek },
-    { label: 'Sem 4 (8–14 Abr)', done: 7.5, target: CURRENT_PLAN.hrsPerWeek },
-]
 
 const TOPIC_CATEGORIES = [
     {
         title: 'Mentalidad y Control Emocional',
         topics: [
-            { name: 'Cómo dejar el tilt', status: 'completado' },
-            { name: 'Mentalidad para rankeds', status: 'completado' },
-            { name: 'Control emocional en partidas perdidas', status: 'en-progreso' },
+            { name: 'Cómo dejar el tilt', status: 'pendiente' },
+            { name: 'Mentalidad para rankeds', status: 'pendiente' },
+            { name: 'Control emocional en partidas perdidas', status: 'pendiente' },
             { name: 'Cómo no rendirse (mentalidad comeback)', status: 'pendiente' },
             { name: 'Manejo de la frustración', status: 'pendiente' },
             { name: 'Confianza en tus decisiones', status: 'pendiente' },
@@ -68,10 +42,10 @@ const TOPIC_CATEGORIES = [
     {
         title: 'Macro Game',
         topics: [
-            { name: 'Cuándo hacer objetivos (dragón, barón)', status: 'completado' },
-            { name: 'Rotaciones eficientes', status: 'completado' },
-            { name: 'Control de visión (wards)', status: 'completado' },
-            { name: 'Prioridad de líneas', status: 'en-progreso' },
+            { name: 'Cuándo hacer objetivos (dragón, barón)', status: 'pendiente' },
+            { name: 'Rotaciones eficientes', status: 'pendiente' },
+            { name: 'Control de visión (wards)', status: 'pendiente' },
+            { name: 'Prioridad de líneas', status: 'pendiente' },
             { name: 'Cómo cerrar partidas', status: 'pendiente' },
             { name: 'Shotcalling básico', status: 'pendiente' },
             { name: 'Cómo jugar con ventaja', status: 'pendiente' },
@@ -81,14 +55,14 @@ const TOPIC_CATEGORIES = [
     {
         title: 'Micro Game y Mecánicas',
         topics: [
-            { name: 'Trading en línea', status: 'en-progreso' },
+            { name: 'Trading en línea', status: 'pendiente' },
             { name: 'Farming (CS perfecto)', status: 'pendiente' },
             { name: 'Uso correcto de habilidades', status: 'pendiente' },
             { name: 'Posicionamiento en teamfights', status: 'pendiente' },
             { name: 'Uso de summoners', status: 'pendiente' },
             { name: 'Cómo kitear correctamente', status: 'pendiente' },
             { name: 'Mecánicas por rol', status: 'pendiente' },
-            { name: 'Dominio del champion pool', status: 'en-progreso' },
+            { name: 'Dominio del champion pool', status: 'pendiente' },
         ],
     },
     {
@@ -208,42 +182,51 @@ export default function SeguimientoPanel({ adminUserId }: { adminUserId?: string
     }
 
     useEffect(() => {
-        if (!adminUserId || !token) {
+        if (!token) {
             setUserProfile(null)
             setUserSessions([])
             return
         }
+
         setLoadingAdmin(true)
         setEditingCatTitle(null)
         setEditDraft({})
-        Promise.all([
-            adminGetUserProfile(token, adminUserId),
-            adminGetUserSessions(token, adminUserId),
-        ])
-            .then(([profile, sessions]) => {
-                setUserProfile(profile)
-                setUserSessions(sessions)
-            })
-            .finally(() => setLoadingAdmin(false))
+
+        if (adminUserId) {
+            Promise.all([
+                adminGetUserProfile(token, adminUserId),
+                adminGetUserSessions(token, adminUserId),
+            ])
+                .then(([profile, sessions]) => {
+                    setUserProfile(profile)
+                    setUserSessions(sessions)
+                })
+                .finally(() => setLoadingAdmin(false))
+        } else {
+            getUserProfile(token)
+                .then((profile) => {
+                    setUserProfile(profile as any)
+                    setUserSessions(profile.sessions || [])
+                })
+                .finally(() => setLoadingAdmin(false))
+        }
     }, [adminUserId, token])
 
-    const planCfg = adminUserId && userProfile?.plan
+    const planCfg = userProfile?.plan
         ? (PLAN_CONFIG[userProfile.plan] ?? CURRENT_PLAN)
         : CURRENT_PLAN
 
-    const baseHours = planCfg.hrsPerWeek * 4
-    const extraHours = adminUserId ? (userProfile?.additionalHours ?? 0) : 0
+    const baseHours = (planCfg.hrsPerWeek ?? 0) * 4
+    const extraHours = userProfile?.additionalHours ?? 0
     const totalHours = baseHours + extraHours
 
-    const completedHours = adminUserId
-        ? userSessions.reduce((acc, s) => acc + s.hours, 0)
-        : COMPLETED_HOURS
+    const completedHours = userSessions.reduce((acc, s) => acc + s.hours, 0)
     const remainingHours = Math.max(0, totalHours - completedHours)
     const progressPct = totalHours > 0 ? Math.min(100, Math.round((completedHours / totalHours) * 100)) : 0
 
-    const displaySessions = adminUserId
-        ? [...userSessions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        : SESSIONS.map((s) => ({ date: s.date, hours: s.hrs, topic: s.topic }))
+    const displaySessions = [...userSessions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+    const computedWeeks = computeWeekBreakdown(userSessions, planCfg.hrsPerWeek ?? 0)
 
     // Group sessions by date for the history view
     const groupedSessions: { date: string; totalHours: number; topics: string[] }[] = []
@@ -530,10 +513,7 @@ export default function SeguimientoPanel({ adminUserId }: { adminUserId?: string
                         {/* Weekly breakdown */}
                         <div className="bg-red-950/30 backdrop-blur-sm border border-red-800/20 rounded-2xl p-6 flex flex-col gap-3">
                             <span className="font-primary text-[.82rem] font-semibold text-[rgba(255,210,210,.8)]">Horas por Semana</span>
-                            {computeWeekBreakdown(
-                                adminUserId ? userSessions : SESSIONS.map((s) => ({ date: s.date, hours: s.hrs })),
-                                planCfg.hrsPerWeek
-                            ).map((w) => {
+                            {computedWeeks.map((w) => {
                                 const isComplete = w.done >= w.target
                                 return (
                                     <div key={w.label} className="flex items-center justify-between px-3 py-2 rounded-lg bg-red-950/40 border border-red-800/20 hover:border-red-700/30 transition-colors">

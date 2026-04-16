@@ -85,7 +85,7 @@ export default function LoginPage() {
 
             // Registro iniciado → redirigir a verificación de correo
             setLoading(false)
-            router.push(`/registro/verificar?email=${encodeURIComponent(regEmail)}&name=${encodeURIComponent(regName)}`)
+            router.push(`/registro/verificar?email=${encodeURIComponent(regEmail)}&name=${encodeURIComponent(regName)}&pwd=${encodeURIComponent(regPassword)}`)
         } catch {
             setError('Error de conexión.')
             setLoading(false)
